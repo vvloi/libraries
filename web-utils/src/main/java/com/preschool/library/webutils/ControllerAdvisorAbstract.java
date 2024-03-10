@@ -24,7 +24,19 @@ public abstract class ControllerAdvisorAbstract extends ResponseEntityExceptionH
             NotAuthorizedException notAuthorizedException, WebRequest request) {
         HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
         log.error("Not authorized exception");
-        return ResponseEntity.status(unauthorized).body((Response.error(unauthorized.name(), null)));
+        return ResponseEntity.status(unauthorized)
+                .body((Response.error(unauthorized.name(), unauthorized.getReasonPhrase())));
+    }
+
+    @ExceptionHandler(ApplicationException.class)
+    public ResponseEntity<Response<Void>> handleAppException(
+            ApplicationException applicationException, WebRequest request) {
+        log.error(
+                "Application exception [code {}, message {}]",
+                applicationException.getCode(),
+                applicationException.getMessage());
+        return ResponseEntity.status(applicationException.getHttpStatus())
+                .body((Response.error(applicationException.getCode(), applicationException.getMessage())));
     }
 
     @Override
