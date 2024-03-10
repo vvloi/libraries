@@ -12,7 +12,7 @@ plugins {
 
 allprojects {
 	group = 'com.preschool'
-	version = '0.0.1-SNAPSHOT'
+	version = 'git rev-parse --short HEAD'.execute().text.trim() + '-0.0.1-SNAPSHOT'
 
 	ext {
 		set('snakeyaml.version','2.2') // Fix security
@@ -30,6 +30,15 @@ nexusPublishing {
 			password = "$nexPassword"
 		}
 	}
+}
+
+def getGitHash = { ->
+	def stdout = new ByteArrayOutputStream()
+	exec {
+		commandLine 'git', 'rev-parse', '--short', 'HEAD'
+		standardOutput = stdout
+	}
+	return stdout.toString().trim();
 }
 
 subprojects {
@@ -84,6 +93,8 @@ subprojects {
 	}
 
 	dependencies {
+		implementation 'org.slf4j:slf4j-api:2.0.12'
+
 		compileOnly 'org.projectlombok:lombok:1.18.30'
 		annotationProcessor 'org.projectlombok:lombok:1.18.30'
 		annotationProcessor group: 'org.projectlombok', name: 'lombok-mapstruct-binding', version: '0.2.0'
