@@ -1,5 +1,7 @@
 package com.preschool.library.webutils;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -8,9 +10,6 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 @Slf4j
 public class AppGrantedAuthorityMapper implements GrantedAuthoritiesMapper {
     private static final String GROUPS = "groups";
@@ -18,14 +17,14 @@ public class AppGrantedAuthorityMapper implements GrantedAuthoritiesMapper {
     private static final String ROLES_CLAIM = "roles";
 
     @Override
-    public Collection<? extends GrantedAuthority> mapAuthorities(Collection<? extends GrantedAuthority> authorities) {
+    public Collection<? extends GrantedAuthority> mapAuthorities(
+            Collection<? extends GrantedAuthority> authorities) {
         GrantedAuthority authority = authorities.iterator().next();
         return Optional.of(authority)
                 .filter(OidcUserAuthority.class::isInstance)
                 .flatMap(this::parseOidcUserAuthority)
                 .orElse(parseOAuth2UserAuthority(authority));
     }
-
 
     private Set<GrantedAuthority> parseToAuthority(Collection<String> roles) {
         log.info("process for user has roles {}", roles);
