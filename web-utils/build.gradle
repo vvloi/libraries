@@ -1,6 +1,9 @@
 dependencies {
-	implementation 'org.springframework:spring-webmvc:6.1.4'
+	implementation 'org.springframework:spring-webmvc'
 	implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+	compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 publishMavenPublicationToNexusRepoRepository {
