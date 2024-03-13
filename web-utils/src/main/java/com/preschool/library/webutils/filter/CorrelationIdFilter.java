@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,7 +41,9 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         ServletOutputStream out = response.getOutputStream();
-        Response<Void> error = Response.error(HttpStatus.BAD_REQUEST);
+        Response<Void> error =
+                Response.error(
+                        "MISSING_REQUEST_ID_HEADER", "The X-Request-Id header was missing on your request");
         new ObjectMapper().writeValue(out, error);
         out.flush();
     }
