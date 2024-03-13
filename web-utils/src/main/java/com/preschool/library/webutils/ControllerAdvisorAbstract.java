@@ -1,5 +1,6 @@
 package com.preschool.library.webutils;
 
+import com.preschool.library.webutils.exception.ApplicationException;
 import com.preschool.library.webutils.response.Response;
 import jakarta.ws.rs.NotAuthorizedException;
 import java.util.HashMap;

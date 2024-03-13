@@ -1,12 +1,14 @@
 package com.preschool.library.webutils.filter;
 
 import com.preschool.library.webutils.context.CorrelationIdContext;
+import com.preschool.library.webutils.exception.MissingRequestIdHeaderException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
@@ -20,6 +22,10 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         String xRequestId = request.getHeader(X_REQUEST_ID);
         log.info(
                 "Start handle for X-Request-Id [{}] of path [{}]", xRequestId, request.getRequestURI());
+        if (!StringUtils.hasText(xRequestId)) {
+            log.error("Missing header x-request-id");
+            throw new MissingRequestIdHeaderException();
+        }
         CorrelationIdContext.setContext(xRequestId);
         filterChain.doFilter(request, response);
     }
