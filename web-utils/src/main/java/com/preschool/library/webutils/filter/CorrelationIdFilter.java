@@ -1,13 +1,18 @@
 package com.preschool.library.webutils.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.library.webutils.context.CorrelationIdContext;
-import com.preschool.library.webutils.exception.MissingRequestIdHeaderException;
+import com.preschool.library.webutils.response.Response;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,9 +29,21 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
                 "Start handle for X-Request-Id [{}] of path [{}]", xRequestId, request.getRequestURI());
         if (!StringUtils.hasText(xRequestId)) {
             log.error("Missing header x-request-id");
-            throw new MissingRequestIdHeaderException();
+            buildMissingRequestIdHeaderResponse(response);
+            return;
         }
         CorrelationIdContext.setContext(xRequestId);
         filterChain.doFilter(request, response);
+    }
+
+    @SneakyThrows
+    private void buildMissingRequestIdHeaderResponse(HttpServletResponse response) {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        ServletOutputStream out = response.getOutputStream();
+        Response<Void> error = Response.error(HttpStatus.BAD_REQUEST);
+        new ObjectMapper().writeValue(out, error);
+        out.flush();
     }
 }

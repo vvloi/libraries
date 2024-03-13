@@ -1,5 +1,6 @@
 package com.preschool.library.webutils.context;
 
+import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,7 +13,7 @@ public class CorrelationIdContext {
     }
 
     public static String getRequestId() {
-        return context.get() == null ? "" : context.get().xRequestId;
+        return context.get() == null ? UUID.randomUUID().toString() : context.get().xRequestId;
     }
 
     @Builder
