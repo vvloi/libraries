@@ -12,7 +12,7 @@ public class CorrelationIdContext {
     }
 
     public static String getRequestId() {
-        return context.get().xRequestId;
+        return context.get() == null ? "" : context.get().xRequestId;
     }
 
     @Builder
