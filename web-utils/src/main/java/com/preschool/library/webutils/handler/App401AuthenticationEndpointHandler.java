@@ -1,0 +1,30 @@
+package com.preschool.library.webutils.handler;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.preschool.library.webutils.response.Response;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+
+public class App401AuthenticationEndpointHandler implements AuthenticationEntryPoint {
+    @Override
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException authException)
+            throws IOException, ServletException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        ServletOutputStream out = response.getOutputStream();
+        Response<Void> error = Response.error(HttpStatus.UNAUTHORIZED);
+        new ObjectMapper().writeValue(out, error);
+        out.flush();
+    }
+}
