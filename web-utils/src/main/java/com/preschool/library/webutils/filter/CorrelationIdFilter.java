@@ -18,7 +18,8 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String xRequestId = request.getHeader(X_REQUEST_ID);
-        log.info("Start handle for X-Request-Id [{}]", xRequestId);
+        log.info(
+                "Start handle for X-Request-Id [{}] of path [{}]", xRequestId, request.getRequestURI());
         CorrelationIdContext.setContext(xRequestId);
         filterChain.doFilter(request, response);
     }
