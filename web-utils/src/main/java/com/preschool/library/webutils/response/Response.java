@@ -3,7 +3,6 @@ package com.preschool.library.webutils.response;
 import com.preschool.library.webutils.context.CorrelationIdContext;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 
 public record Response<T>(Status status, T payload, Object error, Meta meta) {
@@ -44,6 +43,8 @@ public record Response<T>(Status status, T payload, Object error, Meta meta) {
     }
 
     private static Meta buildMeta() {
-        return Optional.of(CorrelationIdContext.getRequestId()).map(Meta::new).orElse(new Meta(UUID.randomUUID().toString()));
+        return Optional.ofNullable(CorrelationIdContext.getRequestId())
+                .map(Meta::new)
+                .orElse(new Meta(UUID.randomUUID().toString()));
     }
 }
