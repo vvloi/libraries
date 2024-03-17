@@ -1,4 +1,4 @@
-package com.preschool.library.webutils;
+package com.preschool.library.webutils.exception;
 
 import com.preschool.library.webutils.response.Response;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -48,7 +48,7 @@ public abstract class ControllerAdvisorAbstract extends ResponseEntityExceptionH
         List<Map<String, String>> fieldsErrors = fieldsErrors(ex);
         log.error("ARGUMENT_NOT_VALID: {}", fieldsErrors);
         return new ResponseEntity<>(
-                Response.error("ARGUMENT_NOT_VALID", "Some argument fields not valid", fieldsErrors(ex)),
+                Response.error(LibraryErrorCode.ARGUMENT_NOT_VALID, fieldsErrors(ex)),
                 HttpStatus.BAD_REQUEST);
     }
 

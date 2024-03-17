@@ -1,6 +1,7 @@
 package com.preschool.library.webutils.response;
 
 import com.preschool.library.webutils.context.CorrelationIdContext;
+import com.preschool.library.webutils.exception.ErrorCodeOperation;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -32,12 +33,20 @@ public record Response<T>(Status status, T payload, Object error, Meta meta) {
                 new Status(status.name(), status.getReasonPhrase()), null, null, buildMeta());
     }
 
+    public static <T> Response<T> error(ErrorCodeOperation error) {
+        return new Response<>(new Status(error.getCode(), error.getMessage()), null, null, buildMeta());
+    }
+
     public static <T> Response<T> error(String code, String message, Object error) {
         return new Response<>(new Status(code, message), null, error, buildMeta());
     }
 
+    public static <T> Response<T> error(ErrorCodeOperation error, Object errorData) {
+        return new Response<>(
+                new Status(error.getCode(), error.getMessage()), null, error, buildMeta());
+    }
+
     public static <T> Response<T> error(String code, String message, Object error, Meta meta) {
-        // TODO: if meta == null then build meta from request-id header
         return new Response<>(
                 new Status(code, message), null, error, meta != null ? null : buildMeta());
     }

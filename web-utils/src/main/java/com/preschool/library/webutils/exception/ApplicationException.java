@@ -1,4 +1,4 @@
-package com.preschool.library.webutils;
+package com.preschool.library.webutils.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

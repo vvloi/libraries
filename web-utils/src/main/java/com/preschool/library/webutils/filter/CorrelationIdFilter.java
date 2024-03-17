@@ -2,6 +2,7 @@ package com.preschool.library.webutils.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.library.webutils.context.CorrelationIdContext;
+import com.preschool.library.webutils.exception.LibraryErrorCode;
 import com.preschool.library.webutils.response.Response;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -41,9 +42,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         ServletOutputStream out = response.getOutputStream();
-        Response<Void> error =
-                Response.error(
-                        "MISSING_REQUEST_ID_HEADER", "The X-Request-Id header was missing on your request");
+        Response<Void> error = Response.error(LibraryErrorCode.MISSING_REQUEST_ID_HEADER);
         new ObjectMapper().writeValue(out, error);
         out.flush();
     }
