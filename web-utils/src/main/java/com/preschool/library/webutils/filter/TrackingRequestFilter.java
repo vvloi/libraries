@@ -15,13 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Slf4j
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class TrackingRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(
