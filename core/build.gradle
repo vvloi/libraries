@@ -1,6 +1,4 @@
-dependencies {
-    implementation project(':core')
-}
+dependencies {}
 
 publishMavenPublicationToNexusRepoRepository {
     dependsOn jar

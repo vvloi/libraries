@@ -1,4 +1,4 @@
-package com.preschool.library.webutils;
+package com.preschool.library.core.eumeration;
 
 public enum RequestType {
     REST_API,

@@ -1,9 +1,9 @@
 package com.preschool.library.webutils.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.library.webutils.RequestType;
+import com.preschool.library.core.eumeration.RequestType;
 import com.preschool.library.webutils.context.CorrelationIdContext;
-import com.preschool.library.webutils.dto.TrackingRequestDTO;
+import com.preschool.library.core.dto.TrackingRequestDTO;
 import com.preschool.library.webutils.filter.requestcache.PayloadCachingRequest;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

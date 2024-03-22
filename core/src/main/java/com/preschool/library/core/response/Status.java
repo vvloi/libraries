@@ -1,4 +1,4 @@
-package com.preschool.library.webutils.response;
+package com.preschool.library.core.response;
 
 public record Status(String code, String message) {
     public Status(String code) {

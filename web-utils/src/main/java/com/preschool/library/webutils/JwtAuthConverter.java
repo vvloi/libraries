@@ -16,12 +16,6 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
 
-    private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter;
-
-    public JwtAuthConverter() {
-        this.jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-    }
-
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         return new JwtAuthenticationToken(jwt, getAuthorityFromJwt(jwt));

@@ -1,4 +1,6 @@
 dependencies {
+	implementation project(':core')
+
 	implementation 'org.springframework:spring-webmvc'
 	implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
 	compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'

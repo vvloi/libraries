@@ -1,7 +1,7 @@
 package com.preschool.library.webutils.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.library.webutils.response.Response;
+import com.preschool.library.core.response.Response;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;

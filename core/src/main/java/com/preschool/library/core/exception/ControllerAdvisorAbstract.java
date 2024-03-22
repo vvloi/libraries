@@ -1,4 +1,4 @@
-package com.preschool.library.webutils.exception;
+package com.preschool.library.core.exception;
 
 import com.preschool.library.webutils.response.Response;
 import jakarta.ws.rs.NotAuthorizedException;

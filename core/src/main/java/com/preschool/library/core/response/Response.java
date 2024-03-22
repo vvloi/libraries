@@ -1,10 +1,11 @@
-package com.preschool.library.webutils.response;
+package com.preschool.library.core.response;
 
+import com.preschool.library.core.exception.ErrorCodeOperation;
 import com.preschool.library.webutils.context.CorrelationIdContext;
-import com.preschool.library.webutils.exception.ErrorCodeOperation;
+import org.springframework.http.HttpStatus;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 
 public record Response<T>(Status status, T payload, Object error, Meta meta) {
     private static final String SUCCESS = "SUCCESS";

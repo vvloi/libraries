@@ -1,4 +1,4 @@
-package com.preschool.library.webutils.dto;
+package com.preschool.library.core.dto;
 
 import com.preschool.library.webutils.RequestType;
 import java.util.List;
