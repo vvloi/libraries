@@ -3,7 +3,7 @@ package com.preschool.library.webutils.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.library.core.exception.LibraryErrorCode;
 import com.preschool.library.webutils.context.CorrelationIdContext;
-import com.preschool.library.core.response.Response;
+import com.preschool.library.webutils.response.Response;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;

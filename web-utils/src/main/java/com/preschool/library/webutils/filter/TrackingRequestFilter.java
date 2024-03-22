@@ -1,9 +1,9 @@
 package com.preschool.library.webutils.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.preschool.library.core.dto.TrackingRequestDTO;
 import com.preschool.library.core.eumeration.RequestType;
 import com.preschool.library.webutils.context.CorrelationIdContext;
-import com.preschool.library.core.dto.TrackingRequestDTO;
 import com.preschool.library.webutils.filter.requestcache.PayloadCachingRequest;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
@@ -72,6 +73,7 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         String body = new String(responseWrapper.getContentAsByteArray());
         log.debug("Response: [{}]", body);
         responseWrapper.copyBodyToResponse();
-        return new TrackingRequestDTO.Response(body);
+        return new TrackingRequestDTO.Response(
+                HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);
     }
 }

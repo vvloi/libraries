@@ -1,4 +1,6 @@
-dependencies {}
+dependencies {
+
+}
 
 publishMavenPublicationToNexusRepoRepository {
     dependsOn jar
