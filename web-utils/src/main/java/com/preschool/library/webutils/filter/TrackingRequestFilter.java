@@ -1,8 +1,11 @@
 package com.preschool.library.webutils.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.preschool.library.core.ApplicationConstants;
 import com.preschool.library.core.dto.TrackingRequestDTO;
 import com.preschool.library.core.eumeration.RequestType;
+import com.preschool.library.kafkautils.KafkaMessageMetadata;
+import com.preschool.library.kafkautils.ProducerService;
 import com.preschool.library.webutils.context.CorrelationIdContext;
 import com.preschool.library.webutils.filter.requestcache.PayloadCachingRequest;
 import jakarta.servlet.FilterChain;
@@ -13,8 +16,11 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,12 +28,18 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Slf4j
 @Component
+@Order(-1)
+@RequiredArgsConstructor
 public class TrackingRequestFilter extends OncePerRequestFilter {
+    @Value("application.default-kafka.metrics-topic")
+    private String metricsTopic;
+
+    private final ProducerService producerService;
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String requestId = CorrelationIdContext.getRequestId();
         PayloadCachingRequest cachingRequest = new PayloadCachingRequest(request);
         ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
 
@@ -35,11 +47,7 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         filterChain.doFilter(cachingRequest, cachingResponse);
         TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
 
-        TrackingRequestDTO.MetadataTracking metadataTracking =
-                new TrackingRequestDTO.MetadataTracking(
-                        RequestType.REST_API, requestTrackingData, responseTrackingData);
-        TrackingRequestDTO trackingRequestDTO = new TrackingRequestDTO(requestId, metadataTracking);
-        log.debug(new ObjectMapper().writeValueAsString(trackingRequestDTO));
+        sendTrackingMessage(requestTrackingData, responseTrackingData);
     }
 
     @SneakyThrows
@@ -77,5 +85,24 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         responseWrapper.copyBodyToResponse();
         return new TrackingRequestDTO.Response(
                 HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);
+    }
+
+    private void sendTrackingMessage(
+            TrackingRequestDTO.Request request, TrackingRequestDTO.Response response) {
+        String requestId = CorrelationIdContext.getRequestId();
+
+        TrackingRequestDTO.MetadataTracking metadataTracking =
+                new TrackingRequestDTO.MetadataTracking(RequestType.REST_API, request, response);
+        TrackingRequestDTO trackingRequestDTO = new TrackingRequestDTO(requestId, metadataTracking);
+
+        KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
+                KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
+                        .topic(metricsTopic)
+                        .event(ApplicationConstants.COLLECT_METRICS)
+                        .data(trackingRequestDTO)
+                        .xRequestId(requestId)
+                        .build();
+
+        producerService.sendMessage(kafkaMessageMetadata);
     }
 }

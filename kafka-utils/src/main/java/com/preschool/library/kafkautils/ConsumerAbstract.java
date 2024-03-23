@@ -12,16 +12,37 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 @Slf4j
+@EnableConfigurationProperties(DefaultKafkaProperties.class)
 public abstract class ConsumerAbstract<T> {
+    private ProducerService producerService;
+    private DefaultKafkaProperties defaultKafkaProperties;
+
+    public ConsumerAbstract() {
+        Assert.notNull(
+                defaultKafkaProperties.getMetricsTopic(),
+                "MUST register metrics-topic when use kafka-utils library");
+    }
+
+    @Autowired
+    public void setProducerService(ProducerService producerService) {
+        this.producerService = producerService;
+    }
+
+    @Autowired
+    public void setDefaultKafkaProperties(DefaultKafkaProperties defaultKafkaProperties) {
+        this.defaultKafkaProperties = defaultKafkaProperties;
+    }
+
     public void executeHandle(String message, Class<T> tClass, Map<String, String> headers) {
         T data = parseMessage(message, tClass);
         Optional.of(data)
@@ -31,7 +52,7 @@ public abstract class ConsumerAbstract<T> {
                             log.error(
                                     "Having some errors [{}] when validating message data",
                                     String.join(",", validationErrors));
-                            buildTrackingRequest(
+                            sendTrackingTopic(
                                     message,
                                     headers,
                                     LibraryErrorCode.VALIDATION_KAFKA_MESSAGE_ERROR.name(),
@@ -43,7 +64,7 @@ public abstract class ConsumerAbstract<T> {
                             log.info(
                                     "Start process for message has request id [{}]",
                                     headers.get(ApplicationConstants.X_REQUEST_ID));
-                            doExecute(data);
+                            execute(message, data, headers);
                             return Optional.empty();
                         });
     }
@@ -55,7 +76,7 @@ public abstract class ConsumerAbstract<T> {
             data = objectMapper.readValue(message, tClass);
         } catch (Exception e) {
             log.error("An error occur, NonRetryableException will be thrown. {}", e.getMessage(), e);
-            throwRetryableException(e);
+            throw new NonRetryableException();
         }
 
         return data;
@@ -72,6 +93,29 @@ public abstract class ConsumerAbstract<T> {
 
             return errorMessages;
         }
+    }
+
+    private void sendTrackingTopic(
+            String message,
+            Map<String, String> headers,
+            String responseStatus,
+            String... validationErrors) {
+        if (Objects.equals(defaultKafkaProperties.getMetricsTopic(), headers.get(KafkaHeaders.TOPIC))) {
+            return;
+        }
+
+        TrackingRequestDTO trackingRequestDTO =
+                buildTrackingRequest(message, headers, responseStatus, validationErrors);
+        KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
+                KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
+                        .topic(defaultKafkaProperties.getMetricsTopic())
+                        .event(ApplicationConstants.COLLECT_METRICS)
+                        .data(trackingRequestDTO)
+                        .serviceName(headers.get(ApplicationConstants.SERVICE_NAME))
+                        .xRequestId(headers.get(ApplicationConstants.X_REQUEST_ID))
+                        .build();
+
+        producerService.sendMessage(kafkaMessageMetadata);
     }
 
     private TrackingRequestDTO buildTrackingRequest(
@@ -100,33 +144,27 @@ public abstract class ConsumerAbstract<T> {
                 .toList();
     }
 
-    // override it if you want to retry message when can't parse kafka message
-    public void throwRetryableException(Exception e) {
-        throw new NonRetryableException();
-    }
-
     private void execute(String message, T data, Map<String, String> headers) {
         try {
             doExecute(data);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throwNonRetryableIfCatchApplicationException(message, headers, e);
-
-            buildTrackingRequest(message, headers, e.getMessage());
-            throw e;
+            String responseStatus =
+                    (e instanceof ApplicationException)
+                            ? ((ApplicationException) e).getCode()
+                            : e.getMessage();
+            sendTrackingTopic(message, headers, responseStatus);
+            throwNonRetryableIfCatchApplicationException(e);
         }
     }
 
     public abstract void doExecute(T data);
 
-    private void throwNonRetryableIfCatchApplicationException(
-            String message, Map<String, String> headers, Exception e) {
+    @SneakyThrows
+    private void throwNonRetryableIfCatchApplicationException(Exception e) {
         if (!(e instanceof ApplicationException)) {
-            return;
+            throw e;
         }
-
-        String responseStatus = ((ApplicationException) e).getCode();
-        buildTrackingRequest(message, headers, responseStatus);
 
         throw new NonRetryableException();
     }
