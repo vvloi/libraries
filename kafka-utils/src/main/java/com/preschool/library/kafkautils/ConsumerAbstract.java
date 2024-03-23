@@ -108,14 +108,12 @@ public abstract class ConsumerAbstract<T> {
                 buildTrackingRequest(message, headers, responseStatus, validationErrors);
         KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
                 KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
-                        .topic(defaultKafkaProperties.getMetricsTopic())
-                        .event(ApplicationConstants.COLLECT_METRICS)
                         .data(trackingRequestDTO)
                         .serviceName(headers.get(ApplicationConstants.SERVICE_NAME))
                         .xRequestId(headers.get(ApplicationConstants.X_REQUEST_ID))
                         .build();
 
-        producerService.sendMessage(kafkaMessageMetadata);
+        producerService.sendTrackingMessage(kafkaMessageMetadata);
     }
 
     private TrackingRequestDTO buildTrackingRequest(

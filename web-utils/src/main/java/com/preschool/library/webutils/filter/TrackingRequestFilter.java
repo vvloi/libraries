@@ -1,7 +1,6 @@
 package com.preschool.library.webutils.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.library.core.ApplicationConstants;
 import com.preschool.library.core.dto.TrackingRequestDTO;
 import com.preschool.library.core.eumeration.RequestType;
 import com.preschool.library.kafkautils.KafkaMessageMetadata;
@@ -19,7 +18,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -31,8 +29,6 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 @Order(-1)
 @RequiredArgsConstructor
 public class TrackingRequestFilter extends OncePerRequestFilter {
-    @Value("application.default-kafka.metrics-topic")
-    private String metricsTopic;
 
     private final ProducerService producerService;
 
@@ -97,12 +93,10 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
 
         KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
                 KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
-                        .topic(metricsTopic)
-                        .event(ApplicationConstants.COLLECT_METRICS)
                         .data(trackingRequestDTO)
                         .xRequestId(requestId)
                         .build();
 
-        producerService.sendMessage(kafkaMessageMetadata);
+        producerService.sendTrackingMessage(kafkaMessageMetadata);
     }
 }

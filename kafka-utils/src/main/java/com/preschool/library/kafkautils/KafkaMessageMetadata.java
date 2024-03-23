@@ -1,7 +1,17 @@
 package com.preschool.library.kafkautils;
 
-import lombok.Builder;
+import lombok.*;
 
 @Builder
-public record KafkaMessageMetadata<T, A>(
-        String topic, String event, T data, A additionalData, String serviceName, String xRequestId) {}
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public final class KafkaMessageMetadata<T, A> {
+    private String topic;
+    private String event;
+    private T data;
+    private A additionalData;
+    private String serviceName;
+    private String xRequestId;
+}
