@@ -3,6 +3,7 @@ package com.preschool.library.kafkautils;
 import com.preschool.library.core.ApplicationConstants;
 import com.preschool.library.core.dto.TrackingRequestDTO;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -27,7 +28,7 @@ public class ProducerService {
         KafkaData<T, A> message =
                 new KafkaData<>(
                         messageMetadata.getEvent(),
-                        LocalDateTime.now().toString(),
+                        ZonedDateTime.now().toString(),
                         messageMetadata.getData(),
                         messageMetadata.getAdditionalData());
         MessageHeaders headers =
