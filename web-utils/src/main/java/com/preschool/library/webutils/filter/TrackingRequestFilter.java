@@ -18,7 +18,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -26,7 +25,6 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Slf4j
 @Component
-@Order(-1)
 @RequiredArgsConstructor
 public class TrackingRequestFilter extends OncePerRequestFilter {
 
