@@ -27,7 +27,7 @@ public class ProducerService {
         KafkaData<T, A> message =
                 new KafkaData<>(
                         messageMetadata.getEvent(),
-                        LocalDateTime.now(),
+                        LocalDateTime.now().toString(),
                         messageMetadata.getData(),
                         messageMetadata.getAdditionalData());
         MessageHeaders headers =
