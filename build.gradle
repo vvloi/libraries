@@ -11,7 +11,7 @@ plugins {
 }
 
 allprojects {
-	group = 'com.preschool'
+	group = 'com.preschool.libraries'
 	version = 'git rev-parse --short HEAD'.execute().text.trim() + '-0.0.1-SNAPSHOT'
 
 	ext {
