@@ -1,5 +1,6 @@
 package com.preschool.libraries.base.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.annotation.SensitiveProcessor;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.context.CorrelationIdContext;
@@ -30,7 +31,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 public class TrackingRequestFilter extends OncePerRequestFilter {
 
     private final ProducerService producerService;
-    private final AppObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new AppObjectMapper();
 
     @Override
     protected void doFilterInternal(
