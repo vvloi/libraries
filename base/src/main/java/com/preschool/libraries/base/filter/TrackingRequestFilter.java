@@ -1,8 +1,9 @@
 package com.preschool.libraries.base.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.libraries.base.dto.TrackingRequestDTO;
+import com.preschool.libraries.base.annotation.SensitiveProcessor;
+import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.context.CorrelationIdContext;
+import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.eumeration.RequestType;
 import com.preschool.libraries.base.filter.requestcache.PayloadCachingRequest;
 import com.preschool.libraries.base.kafka.KafkaMessageMetadata;
@@ -29,6 +30,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 public class TrackingRequestFilter extends OncePerRequestFilter {
 
     private final ProducerService producerService;
+    private final AppObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -50,10 +52,12 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         String url = cachingRequest.getRequestURI();
         List<TrackingRequestDTO.Request.Header> headers = getHeaders(cachingRequest);
         String payload = new String(cachingRequest.getCachedPayload());
-
         log.info("{} {}", method, url);
-        log.debug("Headers: [{}]", new ObjectMapper().writeValueAsString(headers));
-        log.debug("Payload: [{}]", payload);
+        log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
+
+        Object o = objectMapper.readValue(payload, Object.class);
+        SensitiveProcessor.sensitiveData(o);
+        log.debug("Payload: [{}]", objectMapper.writeValueAsString(o));
 
         return new TrackingRequestDTO.Request(method, url, headers, payload);
     }
@@ -75,7 +79,9 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
     private TrackingRequestDTO.Response exploreResponse(
             ContentCachingResponseWrapper responseWrapper) {
         String body = new String(responseWrapper.getContentAsByteArray());
-        log.debug("Response: [{}]", body);
+        Object o = objectMapper.readValue(body, Object.class);
+        SensitiveProcessor.sensitiveData(o);
+        log.debug("Response: [{}]", objectMapper.writeValueAsString(o));
         responseWrapper.copyBodyToResponse();
         return new TrackingRequestDTO.Response(
                 HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);

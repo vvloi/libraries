@@ -1,13 +1,11 @@
 package com.preschool.libraries.base.kafka;
 
-import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.common.CommonConstants;
-
+import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
