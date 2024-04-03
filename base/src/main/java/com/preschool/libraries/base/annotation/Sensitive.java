@@ -7,4 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Sensitive {}
+public @interface Sensitive {
+    int hideCharacters() default Integer.MAX_VALUE;
+
+    SensitiveHideType hideType() default SensitiveHideType.PARTIAL;
+}

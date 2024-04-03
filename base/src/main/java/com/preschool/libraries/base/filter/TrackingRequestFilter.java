@@ -1,7 +1,6 @@
 package com.preschool.libraries.base.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.libraries.base.annotation.SensitiveProcessor;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.context.CorrelationIdContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
@@ -57,7 +56,6 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
 
         Object o = objectMapper.readValue(payload, Object.class);
-        SensitiveProcessor.sensitiveData(o);
         log.debug("Payload: [{}]", objectMapper.writeValueAsString(o));
 
         return new TrackingRequestDTO.Request(method, url, headers, payload);
@@ -81,7 +79,6 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
             ContentCachingResponseWrapper responseWrapper) {
         String body = new String(responseWrapper.getContentAsByteArray());
         Object o = objectMapper.readValue(body, Object.class);
-        SensitiveProcessor.sensitiveData(o);
         log.debug("Response: [{}]", objectMapper.writeValueAsString(o));
         responseWrapper.copyBodyToResponse();
         return new TrackingRequestDTO.Response(
