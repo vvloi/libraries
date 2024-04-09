@@ -3,6 +3,7 @@ package com.preschool.libraries.base.filter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.common.AppObjectMapper;
+import com.preschool.libraries.base.common.CommonConstants;
 import com.preschool.libraries.base.context.CorrelationIdContext;
 import com.preschool.libraries.base.context.SensitiveContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
@@ -17,10 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -47,9 +45,19 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
 
         SensitiveContext.setContext(
                 SensitiveContext.SensitiveConfig.builder()
-                        .sensitiveHideType(sensitiveConfigProperties.getHideType())
+                        .sensitiveHideType(
+                                Objects.requireNonNullElse(
+                                        sensitiveConfigProperties.getHideType(),
+                                        CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
                         .hideCharacters(sensitiveConfigProperties.getHideCharacters())
-                        .fields(sensitiveConfigProperties.getFields())
+                        .fields(
+                                Objects.requireNonNullElse(
+                                        sensitiveConfigProperties.getFields(),
+                                        CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
+                        .removeFields(
+                                Objects.requireNonNullElse(
+                                        sensitiveConfigProperties.getRemoveFields(),
+                                        CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
                         .build());
 
         TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
@@ -72,6 +80,7 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         SensitiveProcessor.hideSensitiveFields(o);
         log.debug("Payload: [{}]", o);
 
+        payload = SensitiveProcessor.removeFields(o);
         return new TrackingRequestDTO.Request(method, url, headers, payload);
     }
 
@@ -95,6 +104,8 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         Map<String, Object> o = objectMapper.readValue(body, new TypeReference<>() {});
         SensitiveProcessor.hideSensitiveFields(o);
         log.debug("Response: [{}]", o);
+
+        body = SensitiveProcessor.removeFields(o);
         responseWrapper.copyBodyToResponse();
         return new TrackingRequestDTO.Response(
                 HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);

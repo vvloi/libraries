@@ -81,7 +81,7 @@ public class SensitiveProcessor {
 
             String key = entry.getKey();
             if (Objects.requireNonNullElse(
-                            sensitiveConfig.removeFields(), CommonConstants.REMOVE_FIELDS_DEFAULT)
+                            sensitiveConfig.removeFields(), CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT)
                     .contains(key)) {
                 data.remove(key);
             }

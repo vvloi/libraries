@@ -10,5 +10,5 @@ public class CommonConstants {
     public static final String KAFKA_TRACKING_METHOD = "Listener";
     public static final String COLLECT_METRICS = "COLLECT_METRICS";
     public static final SensitiveHideType SENSITIVE_HIDE_TYPE_DEFAULT = SensitiveHideType.FULLY;
-    public static final List<String> REMOVE_FIELDS_DEFAULT = List.of("password", "pwd");
+    public static final List<String> REMOVE_HIDE_FIELDS_DEFAULT = List.of("password", "pwd");
 }
