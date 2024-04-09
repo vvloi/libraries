@@ -34,8 +34,7 @@ public class MaskSensitiveDataTest {
 
     public static class SensitiveDataClassTest {
         private String username;
-        @Sensitive
-        private String password;
+        @Sensitive private String password;
 
         public SensitiveDataClassTest(String username, String password) {
             this.username = username;

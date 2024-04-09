@@ -1,0 +1,57 @@
+package com.preschool.libraries.base.processor;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.preschool.libraries.base.annotation.SensitiveHideType;
+import com.preschool.libraries.base.common.AppObjectMapper;
+import com.preschool.libraries.base.context.SensitiveContext;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+public class SensitiveProcessor {
+    private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
+
+    static {
+        WRAPPER_TYPE_MAP = new HashMap<>(16);
+        WRAPPER_TYPE_MAP.put(Integer.class, int.class);
+        WRAPPER_TYPE_MAP.put(Byte.class, byte.class);
+        WRAPPER_TYPE_MAP.put(Character.class, char.class);
+        WRAPPER_TYPE_MAP.put(Boolean.class, boolean.class);
+        WRAPPER_TYPE_MAP.put(Double.class, double.class);
+        WRAPPER_TYPE_MAP.put(Float.class, float.class);
+        WRAPPER_TYPE_MAP.put(Long.class, long.class);
+        WRAPPER_TYPE_MAP.put(Short.class, short.class);
+        WRAPPER_TYPE_MAP.put(Void.class, void.class);
+        WRAPPER_TYPE_MAP.put(String.class, String.class);
+    }
+
+    public static void hideSensitiveFields(Map<String, Object> data) {
+        SensitiveContext.SensitiveConfig sensitiveConfig = SensitiveContext.getContext();
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            if (!WRAPPER_TYPE_MAP.containsKey(entry.getValue().getClass())) {
+                hideSensitiveFields(
+                        new AppObjectMapper().convertValue(entry.getValue(), new TypeReference<>() {}));
+                continue;
+            }
+
+            String key = entry.getKey();
+            if (sensitiveConfig.fields().contains(key)) {
+                data.put(key, maskingSensitiveData(data.get(key), sensitiveConfig));
+            }
+        }
+    }
+
+    private static Object maskingSensitiveData(
+            Object value, SensitiveContext.SensitiveConfig sensitiveConfig) {
+        return Optional.ofNullable(value)
+                .map(String::valueOf)
+                .filter(v -> sensitiveConfig.sensitiveHideType() == SensitiveHideType.FULLY)
+                .map(vStr -> "*".repeat(vStr.length()))
+                .orElseGet(
+                        () -> {
+                            String vStr = String.valueOf(value);
+                            int hideChar = Math.min(sensitiveConfig.hideCharacters(), vStr.length());
+                            return "*".repeat(hideChar) + vStr.substring(hideChar);
+                        });
+    }
+}

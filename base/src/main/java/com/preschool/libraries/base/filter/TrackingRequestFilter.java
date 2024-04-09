@@ -1,13 +1,17 @@
 package com.preschool.libraries.base.filter;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.context.CorrelationIdContext;
+import com.preschool.libraries.base.context.SensitiveContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.eumeration.RequestType;
 import com.preschool.libraries.base.filter.requestcache.PayloadCachingRequest;
 import com.preschool.libraries.base.kafka.KafkaMessageMetadata;
 import com.preschool.libraries.base.kafka.ProducerService;
+import com.preschool.libraries.base.processor.SensitiveProcessor;
+import com.preschool.libraries.base.properties.SensitiveConfigProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -31,6 +36,7 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
 
     private final ProducerService producerService;
     private final ObjectMapper objectMapper = new AppObjectMapper();
+    private final SensitiveConfigProperties sensitiveConfigProperties;
 
     @Override
     protected void doFilterInternal(
@@ -38,6 +44,13 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         PayloadCachingRequest cachingRequest = new PayloadCachingRequest(request);
         ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
+
+        SensitiveContext.setContext(
+                SensitiveContext.SensitiveConfig.builder()
+                        .sensitiveHideType(sensitiveConfigProperties.getHideType())
+                        .hideCharacters(sensitiveConfigProperties.getHideCharacters())
+                        .fields(sensitiveConfigProperties.getFields())
+                        .build());
 
         TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
         filterChain.doFilter(cachingRequest, cachingResponse);
@@ -55,8 +68,9 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
         log.info("{} {}", method, url);
         log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
 
-        Object o = objectMapper.readValue(payload, Object.class);
-        log.debug("Payload: [{}]", objectMapper.writeValueAsString(o));
+        Map<String, Object> o = objectMapper.readValue(payload, new TypeReference<>() {});
+        SensitiveProcessor.hideSensitiveFields(o);
+        log.debug("Payload: [{}]", o);
 
         return new TrackingRequestDTO.Request(method, url, headers, payload);
     }
@@ -78,8 +92,9 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
     private TrackingRequestDTO.Response exploreResponse(
             ContentCachingResponseWrapper responseWrapper) {
         String body = new String(responseWrapper.getContentAsByteArray());
-        Object o = objectMapper.readValue(body, Object.class);
-        log.debug("Response: [{}]", objectMapper.writeValueAsString(o));
+        Map<String, Object> o = objectMapper.readValue(body, new TypeReference<>() {});
+        SensitiveProcessor.hideSensitiveFields(o);
+        log.debug("Response: [{}]", o);
         responseWrapper.copyBodyToResponse();
         return new TrackingRequestDTO.Response(
                 HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);

@@ -110,7 +110,7 @@ subprojects {
 	check.dependsOn jacocoTestCoverageVerification
 
 	spotlessJava {
-		dependsOn compileJava, compileTestJava, test
+		dependsOn compileJava, compileTestJava, test, jacocoTestReport
 	}
 
 	jacocoTestReport {

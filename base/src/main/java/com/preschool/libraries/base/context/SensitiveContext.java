@@ -1,6 +1,7 @@
 package com.preschool.libraries.base.context;
 
 import com.preschool.libraries.base.annotation.SensitiveHideType;
+import java.util.List;
 import lombok.Builder;
 
 public class SensitiveContext {
@@ -19,5 +20,6 @@ public class SensitiveContext {
     }
 
     @Builder
-    public record SensitiveConfig(int hideCharacters, SensitiveHideType sensitiveHideType) {}
+    public record SensitiveConfig(
+            int hideCharacters, SensitiveHideType sensitiveHideType, List<String> fields) {}
 }
