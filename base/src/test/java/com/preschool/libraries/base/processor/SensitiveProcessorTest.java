@@ -1,6 +1,7 @@
 package com.preschool.libraries.base.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.preschool.libraries.base.annotation.SensitiveHideType;
 import com.preschool.libraries.base.context.SensitiveContext;
@@ -54,5 +55,16 @@ public class SensitiveProcessorTest {
         SensitiveProcessor.hideSensitiveFields(map);
 
         assertEquals("*****4321", map.get("password"));
+    }
+
+    @Test
+    public void shouldRemoveSensitiveData_primitiveWrapperValue() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("username", "username");
+        map.put("password", 987654321L);
+
+        SensitiveProcessor.removeFields(map);
+
+        assertNull(map.get("password"));
     }
 }

@@ -1,13 +1,17 @@
 package com.preschool.libraries.base.kafka;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.common.CommonConstants;
+import com.preschool.libraries.base.context.SensitiveContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.eumeration.RequestType;
 import com.preschool.libraries.base.exception.ApplicationException;
 import com.preschool.libraries.base.exception.LibraryErrorCode;
 import com.preschool.libraries.base.exception.NonRetryableException;
+import com.preschool.libraries.base.processor.SensitiveProcessor;
+import com.preschool.libraries.base.properties.SensitiveConfigProperties;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -24,13 +28,20 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @EnableConfigurationProperties(DefaultKafkaProperties.class)
 public abstract class ConsumerAbstract<T> {
+    private ObjectMapper objectMapper;
     private ProducerService producerService;
     private DefaultKafkaProperties defaultKafkaProperties;
+    private SensitiveConfigProperties sensitiveConfigProperties;
 
     public ConsumerAbstract() {
         Assert.notNull(
                 defaultKafkaProperties.getMetricsTopic(),
                 "MUST register metrics-topic when use kafka-utils library");
+    }
+
+    @Autowired
+    public void setObjectMapper(AppObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 
     @Autowired
@@ -43,8 +54,18 @@ public abstract class ConsumerAbstract<T> {
         this.defaultKafkaProperties = defaultKafkaProperties;
     }
 
+    @Autowired
+    public void setSensitiveConfigProperties(SensitiveConfigProperties sensitiveConfigProperties) {
+        this.sensitiveConfigProperties = sensitiveConfigProperties;
+    }
+
     public void executeHandle(String message, Class<T> tClass, Map<String, String> headers) {
         T data = parseMessage(message, tClass);
+
+        SensitiveContext.setContext(
+                SensitiveContext.SensitiveConfig.builder()
+                        .removeFields(sensitiveConfigProperties.getRemoveFields())
+                        .build());
         Optional.of(data)
                 .map(this::validate)
                 .flatMap(
@@ -72,7 +93,6 @@ public abstract class ConsumerAbstract<T> {
     private T parseMessage(String message, Class<T> tClass) {
         T data = null;
         try {
-            ObjectMapper objectMapper = new AppObjectMapper();
             data = objectMapper.readValue(message, tClass);
         } catch (Exception e) {
             log.error("An error occur, NonRetryableException will be thrown. {}", e.getMessage(), e);
@@ -121,6 +141,10 @@ public abstract class ConsumerAbstract<T> {
             Map<String, String> headers,
             String responseStatus,
             String... validationErrors) {
+
+        message =
+                SensitiveProcessor.removeFields(
+                        objectMapper.convertValue(message, new TypeReference<>() {}));
         TrackingRequestDTO.Request request =
                 new TrackingRequestDTO.Request(
                         CommonConstants.KAFKA_TRACKING_METHOD,

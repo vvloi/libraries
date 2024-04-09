@@ -21,5 +21,8 @@ public class SensitiveContext {
 
     @Builder
     public record SensitiveConfig(
-            int hideCharacters, SensitiveHideType sensitiveHideType, List<String> fields) {}
+            int hideCharacters,
+            SensitiveHideType sensitiveHideType,
+            List<String> fields,
+            List<String> removeFields) {}
 }

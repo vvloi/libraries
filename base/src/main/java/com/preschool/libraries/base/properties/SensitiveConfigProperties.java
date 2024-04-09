@@ -15,4 +15,5 @@ public class SensitiveConfigProperties {
     private List<String> fields;
     private SensitiveHideType hideType;
     private int hideCharacters;
+    private List<String> removeFields;
 }
