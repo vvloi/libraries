@@ -17,6 +17,6 @@ public class MaskingSensitiveDataIntrospector extends NopAnnotationIntrospector 
             return MaskingSensitiveDataSerializer.class;
         }
 
-        return super.findSerializer(am);
+        return null;
     }
 }
