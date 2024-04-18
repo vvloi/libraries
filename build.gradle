@@ -52,7 +52,7 @@ subprojects {
 		enabled = false
 	}
 
-	sourceCompatibility = JavaVersion.VERSION_20
+	sourceCompatibility = JavaVersion.VERSION_21
 
 	repositories {
 		mavenLocal()
