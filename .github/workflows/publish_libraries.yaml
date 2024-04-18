@@ -7,16 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  hello:
+  publish-library:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: hello world
-        run: echo "Hello World"
-        shell: bash
-  goodbye:
-    runs-on: ubuntu-latest
-    steps:
-      - name: goodbye
-        run: echo "Goodbye World"
-        shell: bash
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+      - name: Build with Gradle
+        run: ./gradlew clean build
