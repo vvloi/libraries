@@ -39,13 +39,13 @@ jobs:
 
       - name: Build and publish libraries to nexus
         env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          ALL_CHANGED_FILES: ${{ steps.setup-changed-files.outputs.all_changed_files }}
         run: |
           for file in ${ALL_CHANGED_FILES}; do
             echo "folder ${file%%/*} was changed"
             if [[ ${file%%/*} != *".github"* ]]; then
-             cd ${file%%/*}
-             echo "moved to ${PWD}"
-            #              ../gradlew clean build publishToNexusRepo
+              cd ${file%%/*}
+              echo "moved to ${PWD}"
+              ../gradlew clean build publishToNexusRepo
             fi
           done
