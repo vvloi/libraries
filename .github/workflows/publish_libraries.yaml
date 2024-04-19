@@ -46,6 +46,6 @@ jobs:
             if [[ ${file%%/*} != *".github"* ]];then
               cd ${file%%/*}
               echo "moved to ${PWD}"
-              ./gradlew clean build publishToNexusRepo
+              ../gradlew clean build publishToNexusRepo
             fi            
           done
