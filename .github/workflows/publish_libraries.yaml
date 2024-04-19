@@ -47,5 +47,6 @@ jobs:
               cd ${file%%/*}
               echo "moved to ${PWD}"
               ../gradlew clean build publishToNexusRepo
+              cd ..
             fi
           done
