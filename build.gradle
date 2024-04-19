@@ -23,8 +23,8 @@ allprojects {
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("http://27.3.196.59:28082/repository/maven-releases")
-			snapshotRepositoryUrl = uri("http://27.3.196.59:28082/repository/maven-snapshots")
+			nexusUrl = uri("https://wren-firm-formerly.ngrok-free.app/repository/maven-releases")
+			snapshotRepositoryUrl = uri("https://wren-firm-formerly.ngrok-free.app/repository/maven-snapshots")
 			allowInsecureProtocol = true
 			username = "$nexUsername"
 			password = "$nexPassword"
