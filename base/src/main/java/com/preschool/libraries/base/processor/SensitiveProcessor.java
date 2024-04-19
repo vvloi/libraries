@@ -26,7 +26,6 @@ public class SensitiveProcessor {
         WRAPPER_TYPE_MAP.put(Short.class, short.class);
         WRAPPER_TYPE_MAP.put(Void.class, void.class);
         WRAPPER_TYPE_MAP.put(String.class, String.class);
-        // test change file on CI
     }
 
     public static void hideSensitiveFields(Map<String, Object> data) {

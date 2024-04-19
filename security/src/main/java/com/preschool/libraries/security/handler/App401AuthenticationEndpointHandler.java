@@ -28,6 +28,5 @@ public class App401AuthenticationEndpointHandler implements AuthenticationEntryP
         Response<Void> error = Response.error(HttpStatus.UNAUTHORIZED);
         new ObjectMapper().writeValue(out, error);
         out.flush();
-        // test change file on CI
     }
 }
