@@ -20,8 +20,9 @@ jobs:
         id: setup-java
         uses: actions/setup-java@v4
         with:
-          distribution: 'oracle'
+          distribution: 'temurin'
           java-version: 21
+          cache: 'gradle'
 
       - name: Setup Gradle
         id: setup-gradle
@@ -31,16 +32,12 @@ jobs:
         id: grant-gradle-permission
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle
-        id: build-gradle
-        run: ./gradlew clean build publishToNexusRepo
-
-      - name: Get changed files
-        id: changed-files
+      - name: Setup changed files
+        id: setup-changed-files
         uses: tj-actions/changed-files@v44
       # NOTE: `since_last_remote_commit: true` is implied by default and falls back to the previous local commit.
 
-      - name: List all changed files
+      - name: Build and publish libraries to nexus
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
@@ -49,5 +46,6 @@ jobs:
             if [[ ${file%%/*} != *".github"* ]];then
               cd ${file%%/*}
               echo "moved to ${PWD}"
+              ./gradlew clean build publishToNexusRepo
             fi            
           done
