@@ -30,4 +30,3 @@ public class App401AuthenticationEndpointHandler implements AuthenticationEntryP
         out.flush();
     }
 }
-

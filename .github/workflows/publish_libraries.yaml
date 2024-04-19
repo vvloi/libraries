@@ -41,12 +41,20 @@ jobs:
         env:
           ALL_CHANGED_FILES: ${{ steps.setup-changed-files.outputs.all_changed_files }}
         run: |
+          declare -A changed_folders
+          
           for file in ${ALL_CHANGED_FILES}; do
             echo "folder ${file%%/*} was changed"
             if [[ ${file%%/*} != *".github"* ]]; then
-              cd ${file%%/*}
-              echo "moved to ${PWD}"
-              ../gradlew clean build publishToNexusRepo
-              cd ..
+              changed_folders[${file%%/*}]=${file%%/*}
             fi
+          done
+          
+          for folder in "${!changed_folders[@]}"; do
+            echo "process deploy $folder library"
+            cd ${folder}
+            echo "moved to ${PWD}"
+            ../gradlew clean build publishToNexusRepo
+            echo "published $folder library to nexus"
+            cd .. 
           done
