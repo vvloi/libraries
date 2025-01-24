@@ -23,11 +23,11 @@ allprojects {
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("https://wren-firm-formerly.ngrok-free.app/repository/maven-releases")
-			snapshotRepositoryUrl = uri("https://wren-firm-formerly.ngrok-free.app/repository/maven-snapshots")
+			nexusUrl = uri("http://localhost:28082/repository/maven-releases")
+			snapshotRepositoryUrl = uri("http://localhost:28082/repository/maven-snapshots")
 			allowInsecureProtocol = true
-			username = "$nexUsername"
-			password = "$nexPassword"
+			username = project.findProperty("nexUsername") ?: System.getenv("nexUsername")
+			password = project.findProperty("nexPassword") ?: System.getenv("nexPassword")
 		}
 	}
 }
