@@ -1,4 +1,4 @@
-package com.preschool.libraries.base.eumeration;
+package com.preschool.libraries.base.enumeration;
 
 public enum RequestType {
     REST_API,

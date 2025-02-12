@@ -1,6 +1,6 @@
 package com.preschool.libraries.base.dto;
 
-import com.preschool.libraries.base.eumeration.RequestType;
+import com.preschool.libraries.base.enumeration.RequestType;
 import java.util.List;
 
 public record TrackingRequestDTO(String requestId, MetadataTracking metadataTracking) {
