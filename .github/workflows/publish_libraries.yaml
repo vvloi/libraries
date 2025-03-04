@@ -42,19 +42,24 @@ jobs:
           ALL_CHANGED_FILES: ${{ steps.setup-changed-files.outputs.all_changed_files }}
         run: |
           declare -A changed_folders
-          
+  
           for file in ${ALL_CHANGED_FILES}; do
-            echo "folder ${file%%/*} was changed"
-            if [[ ${file%%/*} != *".github"* ]]; then
-              changed_folders[${file%%/*}]=${file%%/*}
+            folder=${file%%/*}  # Lấy thư mục gốc từ đường dẫn file
+            echo "folder $folder was changed"
+
+            # Chỉ thêm vào mảng nếu không phải là file trong thư mục gốc
+            if [[ $folder != *".github"* ]] && [[ -d $folder ]]; then
+              changed_folders[$folder]=$folder
             fi
           done
-          
+  
           for folder in "${!changed_folders[@]}"; do
             echo "process deploy $folder library"
-            cd ${folder}
+            cd $folder || { echo "Error: Could not change directory to $folder"; exit 1; }
             echo "moved to ${PWD}"
-            ../gradlew clean build publishToNexusRepo
+
+            ../gradlew clean build publishToNexusRepo || { echo "Error: Gradle build failed for $folder"; exit 1; }
+  
             echo "published $folder library to nexus"
-            cd .. 
+            cd ..
           done
