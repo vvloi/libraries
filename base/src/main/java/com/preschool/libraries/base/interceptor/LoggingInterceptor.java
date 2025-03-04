@@ -20,6 +20,7 @@ public class LoggingInterceptor implements ResponseInterceptor {
         try (Response response = invocationContext.response();
                 Response cloneResponse =
                         response.toBuilder().body(new CachedBody(response.body())).build()) {
+            // test ci
             if (response.body() == null) {
                 return chain.next(invocationContext);
             }

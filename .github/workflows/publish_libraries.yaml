@@ -1,4 +1,4 @@
-name: publish library when have a push action
+name: Publish Library on Push
 
 on:
   push:
@@ -11,13 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        id: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Java
-        id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -25,41 +23,43 @@ jobs:
           cache: 'gradle'
 
       - name: Setup Gradle
-        id: setup-gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Make gradlew executable
-        id: grant-gradle-permission
         run: chmod +x ./gradlew
 
-      - name: Setup changed files
-        id: setup-changed-files
+      - name: Detect changed files
+        id: changed-files
         uses: tj-actions/changed-files@v44
-      # NOTE: `since_last_remote_commit: true` is implied by default and falls back to the previous local commit.
 
-      - name: Build and publish libraries to nexus
-        env:
-          ALL_CHANGED_FILES: ${{ steps.setup-changed-files.outputs.all_changed_files }}
+      - name: Build and publish changed modules
         run: |
-          declare -A changed_folders
-  
-          for file in ${ALL_CHANGED_FILES}; do
-            folder=${file%%/*}  # Lấy thư mục gốc từ đường dẫn file
-            echo "folder $folder was changed"
+          declare -A changed_modules
 
-            # Chỉ thêm vào mảng nếu không phải là file trong thư mục gốc
-            if [[ $folder != *".github"* ]] && [[ -d $folder ]]; then
-              changed_folders[$folder]=$folder
+          # Duyệt qua danh sách file thay đổi
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            module=${file%%/*}  # Lấy thư mục gốc của file
+
+            echo "Detected change in: $module"
+
+            # Chỉ thêm vào nếu nó là module hợp lệ (chứa build.gradle hoặc build.gradle.kts)
+            if [[ -d $module && (-f "$module/build.gradle" || -f "$module/build.gradle.kts") ]]; then
+              changed_modules[$module]=$module
             fi
           done
-  
-          for folder in "${!changed_folders[@]}"; do
-            echo "process deploy $folder library"
-            cd $folder || { echo "Error: Could not change directory to $folder"; exit 1; }
-            echo "moved to ${PWD}"
 
-            ../gradlew clean build publishToNexusRepo || { echo "Error: Gradle build failed for $folder"; exit 1; }
-  
-            echo "published $folder library to nexus"
-            cd ..
+          # Kiểm tra nếu không có module nào thay đổi thì thoát
+          if [[ ${#changed_modules[@]} -eq 0 ]]; then
+            echo "No modules changed, skipping deployment."
+            exit 0
+          fi
+
+          # Build và publish từng module từ thư mục root
+          for module in "${!changed_modules[@]}"; do
+            echo "📦 Deploying module: $module"
+
+            # Chạy Gradle từ thư mục root, chỉ định module với -p
+            ./gradlew -p $module clean build publishToNexusRepo || { echo "❌ Error: Gradle build failed for $module"; exit 1; }
+
+            echo "✅ Published $module to Nexus"
           done
