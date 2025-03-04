@@ -12,19 +12,21 @@ plugins {
 
 allprojects {
 	group = 'com.preschool.libraries'
-	version = 'git rev-parse --short HEAD'.execute().text.trim() + '-0.0.1-SNAPSHOT'
+	def branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+	def timestamp = new Date().format("yyyyMMddHHmmss")
+	def gitTag = 'git describe --tags --always'.execute().text.trim()
+	version = "${branch}-${gitTag}-${timestamp}-SNAPSHOT"
 
 	ext {
-		set('snakeyaml.version','2.2') // Fix security
-		set('springCloudVersion', "2023.0.0")
+		set('springCloudVersion', "2024.0.0")
 	}
 }
 
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("http://localhost:28082/repository/maven-releases")
-			snapshotRepositoryUrl = uri("http://localhost:28082/repository/maven-snapshots")
+			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-releases")
+			snapshotRepositoryUrl = uri("http://nexus.pisolution.vn/repository/maven-snapshots")
 			allowInsecureProtocol = true
 			username = project.findProperty("nexUsername") ?: System.getenv("nexUsername")
 			password = project.findProperty("nexPassword") ?: System.getenv("nexPassword")
