@@ -96,16 +96,18 @@ subprojects {
 
 	spotless {
 		java {
-			target fileTree(projectDir) {
-				include '**/*.java'
-				exclude 'build/generated/**/*.*'
-			}
+			target 'src/main/java/**/*.java'  // Explicitly target source files
 			importOrder()
 			removeUnusedImports()
 			googleJavaFormat('1.20.0')
 			indentWithSpaces(4)
 			endWithNewline()
 		}
+	}
+
+	// Ensure compileJava depends on spotlessApply
+	tasks.named('compileJava') {
+		dependsOn tasks.named('spotlessApply')
 	}
 
 	dependencies {

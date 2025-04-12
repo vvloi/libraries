@@ -55,6 +55,17 @@ jobs:
             echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
           fi
 
+      - name: Apply Spotless formatting
+        if: steps.changed-modules.outputs.changed_modules != ''
+        run: |
+          for module in ${{ steps.changed-modules.outputs.changed_modules }}; do
+            echo "🧹 Formatting module: $module"
+            ./gradlew -p "$module" spotlessApply || {
+              echo "❌ Failed to apply Spotless for module: $module"
+              exit 1
+            }
+          done
+
       - name: Build and publish changed modules
         if: steps.changed-modules.outputs.changed_modules != ''
         env:
