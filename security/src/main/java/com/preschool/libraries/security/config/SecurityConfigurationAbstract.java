@@ -42,11 +42,7 @@ public abstract class SecurityConfigurationAbstract {
                 // disable csrf to get permitAll effectively of request matchers public url
                 .csrf(csrf -> csrf.ignoringRequestMatchers(publicUrls()))
                 .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(publicUrls())
-                                        .permitAll()
-                                        .anyRequest()
-                                        .authenticated())
+                        auth -> auth.requestMatchers(publicUrls()).permitAll().anyRequest().authenticated())
                 .oauth2ResourceServer(
                         (oauth2) ->
                                 oauth2.jwt(
