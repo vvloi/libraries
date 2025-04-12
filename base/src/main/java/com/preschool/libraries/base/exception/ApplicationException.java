@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public abstract class ApplicationException extends RuntimeException {
-    private int httpStatus = 555;
-    private String code;
-    private String message;
+  private int httpStatus = 555;
+  private String code;
+  private String message;
 }

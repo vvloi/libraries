@@ -32,99 +32,99 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 @RequiredArgsConstructor
 public class TrackingRequestFilter extends OncePerRequestFilter {
 
-    private final ProducerService producerService;
-    private final ObjectMapper objectMapper = new AppObjectMapper();
-    private final SensitiveConfigProperties sensitiveConfigProperties;
+  private final ProducerService producerService;
+  private final ObjectMapper objectMapper = new AppObjectMapper();
+  private final SensitiveConfigProperties sensitiveConfigProperties;
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        PayloadCachingRequest cachingRequest = new PayloadCachingRequest(request);
-        ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
+    PayloadCachingRequest cachingRequest = new PayloadCachingRequest(request);
+    ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
 
-        SensitiveContext.setContext(
-                SensitiveContext.SensitiveConfig.builder()
-                        .sensitiveHideType(
-                                Objects.requireNonNullElse(
-                                        sensitiveConfigProperties.getHideType(),
-                                        CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
-                        .hideCharacters(sensitiveConfigProperties.getHideCharacters())
-                        .fields(
-                                Objects.requireNonNullElse(
-                                        sensitiveConfigProperties.getFields(),
-                                        CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-                        .removeFields(
-                                Objects.requireNonNullElse(
-                                        sensitiveConfigProperties.getRemoveFields(),
-                                        CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-                        .build());
+    SensitiveContext.setContext(
+        SensitiveContext.SensitiveConfig.builder()
+            .sensitiveHideType(
+                Objects.requireNonNullElse(
+                    sensitiveConfigProperties.getHideType(),
+                    CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
+            .hideCharacters(sensitiveConfigProperties.getHideCharacters())
+            .fields(
+                Objects.requireNonNullElse(
+                    sensitiveConfigProperties.getFields(),
+                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
+            .removeFields(
+                Objects.requireNonNullElse(
+                    sensitiveConfigProperties.getRemoveFields(),
+                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
+            .build());
 
-        TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
-        filterChain.doFilter(cachingRequest, cachingResponse);
-        TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
+    TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
+    filterChain.doFilter(cachingRequest, cachingResponse);
+    TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
 
-        sendTrackingMessage(requestTrackingData, responseTrackingData);
-    }
+    sendTrackingMessage(requestTrackingData, responseTrackingData);
+  }
 
-    @SneakyThrows
-    private TrackingRequestDTO.Request exploreRequest(PayloadCachingRequest cachingRequest) {
-        String method = cachingRequest.getMethod();
-        String url = cachingRequest.getRequestURI();
-        List<TrackingRequestDTO.Request.Header> headers = getHeaders(cachingRequest);
-        String payload = new String(cachingRequest.getCachedPayload());
-        log.info("{} {}", method, url);
-        log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
+  @SneakyThrows
+  private TrackingRequestDTO.Request exploreRequest(PayloadCachingRequest cachingRequest) {
+    String method = cachingRequest.getMethod();
+    String url = cachingRequest.getRequestURI();
+    List<TrackingRequestDTO.Request.Header> headers = getHeaders(cachingRequest);
+    String payload = new String(cachingRequest.getCachedPayload());
+    log.info("{} {}", method, url);
+    log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
 
-        Map<String, Object> o = objectMapper.readValue(payload, new TypeReference<>() {});
-        SensitiveProcessor.hideSensitiveFields(o);
-        log.debug("Payload: [{}]", o);
+    Map<String, Object> o = objectMapper.readValue(payload, new TypeReference<>() {});
+    SensitiveProcessor.hideSensitiveFields(o);
+    log.debug("Payload: [{}]", o);
 
-        payload = SensitiveProcessor.removeFields(o);
-        return new TrackingRequestDTO.Request(method, url, headers, payload);
-    }
+    payload = SensitiveProcessor.removeFields(o);
+    return new TrackingRequestDTO.Request(method, url, headers, payload);
+  }
 
-    private List<TrackingRequestDTO.Request.Header> getHeaders(
-            PayloadCachingRequest cachingRequestWrapper) {
-        return Optional.ofNullable(cachingRequestWrapper.getHeaderNames())
-                .filter(Enumeration::hasMoreElements)
-                .map(Enumeration::nextElement)
-                .map(
-                        headerName ->
-                                new TrackingRequestDTO.Request.Header(
-                                        headerName, cachingRequestWrapper.getHeader(headerName)))
-                .stream()
-                .toList();
-    }
+  private List<TrackingRequestDTO.Request.Header> getHeaders(
+      PayloadCachingRequest cachingRequestWrapper) {
+    return Optional.ofNullable(cachingRequestWrapper.getHeaderNames())
+        .filter(Enumeration::hasMoreElements)
+        .map(Enumeration::nextElement)
+        .map(
+            headerName ->
+                new TrackingRequestDTO.Request.Header(
+                    headerName, cachingRequestWrapper.getHeader(headerName)))
+        .stream()
+        .toList();
+  }
 
-    @SneakyThrows
-    private TrackingRequestDTO.Response exploreResponse(
-            ContentCachingResponseWrapper responseWrapper) {
-        String body = new String(responseWrapper.getContentAsByteArray());
-        Map<String, Object> o = objectMapper.readValue(body, new TypeReference<>() {});
-        SensitiveProcessor.hideSensitiveFields(o);
-        log.debug("Response: [{}]", o);
+  @SneakyThrows
+  private TrackingRequestDTO.Response exploreResponse(
+      ContentCachingResponseWrapper responseWrapper) {
+    String body = new String(responseWrapper.getContentAsByteArray());
+    Map<String, Object> o = objectMapper.readValue(body, new TypeReference<>() {});
+    SensitiveProcessor.hideSensitiveFields(o);
+    log.debug("Response: [{}]", o);
 
-        body = SensitiveProcessor.removeFields(o);
-        responseWrapper.copyBodyToResponse();
-        return new TrackingRequestDTO.Response(
-                HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);
-    }
+    body = SensitiveProcessor.removeFields(o);
+    responseWrapper.copyBodyToResponse();
+    return new TrackingRequestDTO.Response(
+        HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);
+  }
 
-    private void sendTrackingMessage(
-            TrackingRequestDTO.Request request, TrackingRequestDTO.Response response) {
-        String requestId = CorrelationIdContext.getRequestId();
+  private void sendTrackingMessage(
+      TrackingRequestDTO.Request request, TrackingRequestDTO.Response response) {
+    String requestId = CorrelationIdContext.getRequestId();
 
-        TrackingRequestDTO.MetadataTracking metadataTracking =
-                new TrackingRequestDTO.MetadataTracking(RequestType.REST_API, request, response);
-        TrackingRequestDTO trackingRequestDTO = new TrackingRequestDTO(requestId, metadataTracking);
+    TrackingRequestDTO.MetadataTracking metadataTracking =
+        new TrackingRequestDTO.MetadataTracking(RequestType.REST_API, request, response);
+    TrackingRequestDTO trackingRequestDTO = new TrackingRequestDTO(requestId, metadataTracking);
 
-        KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
-                KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
-                        .data(trackingRequestDTO)
-                        .xRequestId(requestId)
-                        .build();
+    KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
+        KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
+            .data(trackingRequestDTO)
+            .xRequestId(requestId)
+            .build();
 
-        producerService.sendTrackingMessage(kafkaMessageMetadata);
-    }
+    producerService.sendTrackingMessage(kafkaMessageMetadata);
+  }
 }

@@ -15,18 +15,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class App403AccessDeniedHandler implements AccessDeniedHandler {
-    @Override
-    public void handle(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AccessDeniedException accessDeniedException)
-            throws IOException, ServletException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+  @Override
+  public void handle(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      AccessDeniedException accessDeniedException)
+      throws IOException, ServletException {
+    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        ServletOutputStream out = response.getOutputStream();
-        Response<Void> error = Response.error(HttpStatus.FORBIDDEN);
-        new ObjectMapper().writeValue(out, error);
-        out.flush();
-    }
+    ServletOutputStream out = response.getOutputStream();
+    Response<Void> error = Response.error(HttpStatus.FORBIDDEN);
+    new ObjectMapper().writeValue(out, error);
+    out.flush();
+  }
 }

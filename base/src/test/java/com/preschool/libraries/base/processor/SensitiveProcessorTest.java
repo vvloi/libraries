@@ -12,59 +12,59 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SensitiveProcessorTest {
-    @BeforeEach
-    public void setup() {
-        SensitiveContext.SensitiveConfig sensitiveConfig =
-                SensitiveContext.SensitiveConfig.builder()
-                        .fields(List.of("password"))
-                        .hideCharacters(5)
-                        .sensitiveHideType(SensitiveHideType.PARTIAL)
-                        .build();
+  @BeforeEach
+  public void setup() {
+    SensitiveContext.SensitiveConfig sensitiveConfig =
+        SensitiveContext.SensitiveConfig.builder()
+            .fields(List.of("password"))
+            .hideCharacters(5)
+            .sensitiveHideType(SensitiveHideType.PARTIAL)
+            .build();
 
-        SensitiveContext.setContext(sensitiveConfig);
-    }
+    SensitiveContext.setContext(sensitiveConfig);
+  }
 
-    @Test
-    public void shouldHideSensitiveData_stringValue() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("username", "username");
-        map.put("password", "password123");
+  @Test
+  public void shouldHideSensitiveData_stringValue() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("username", "username");
+    map.put("password", "password123");
 
-        SensitiveProcessor.hideSensitiveFields(map);
+    SensitiveProcessor.hideSensitiveFields(map);
 
-        assertEquals("*****ord123", map.get("password"));
-    }
+    assertEquals("*****ord123", map.get("password"));
+  }
 
-    @Test
-    public void shouldHideSensitiveData_primitiveValue() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("username", "username");
-        map.put("password", 123456789);
+  @Test
+  public void shouldHideSensitiveData_primitiveValue() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("username", "username");
+    map.put("password", 123456789);
 
-        SensitiveProcessor.hideSensitiveFields(map);
+    SensitiveProcessor.hideSensitiveFields(map);
 
-        assertEquals("*****6789", map.get("password"));
-    }
+    assertEquals("*****6789", map.get("password"));
+  }
 
-    @Test
-    public void shouldHideSensitiveData_primitiveWrapperValue() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("username", "username");
-        map.put("password", 987654321L);
+  @Test
+  public void shouldHideSensitiveData_primitiveWrapperValue() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("username", "username");
+    map.put("password", 987654321L);
 
-        SensitiveProcessor.hideSensitiveFields(map);
+    SensitiveProcessor.hideSensitiveFields(map);
 
-        assertEquals("*****4321", map.get("password"));
-    }
+    assertEquals("*****4321", map.get("password"));
+  }
 
-    @Test
-    public void shouldRemoveSensitiveData_primitiveWrapperValue() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("username", "username");
-        map.put("password", 987654321L);
+  @Test
+  public void shouldRemoveSensitiveData_primitiveWrapperValue() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("username", "username");
+    map.put("password", 987654321L);
 
-        SensitiveProcessor.removeFields(map);
+    SensitiveProcessor.removeFields(map);
 
-        assertNull(map.get("password"));
-    }
+    assertNull(map.get("password"));
+  }
 }

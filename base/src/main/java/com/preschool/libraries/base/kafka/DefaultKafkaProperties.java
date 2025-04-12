@@ -8,6 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 public class DefaultKafkaProperties {
-    private String server;
-    private String metricsTopic;
+  private String server;
+  private String metricsTopic;
 }

@@ -10,25 +10,25 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.preschool.libraries.base.annotation.MaskingSensitiveDataIntrospector;
 
 public class AppObjectMapper extends ObjectMapper {
-    public AppObjectMapper() {
-        super();
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        registerModule(new JavaTimeModule());
+  public AppObjectMapper() {
+    super();
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    registerModule(new JavaTimeModule());
 
-        setAnnotationIntrospector();
-    }
+    setAnnotationIntrospector();
+  }
 
-    private void setAnnotationIntrospector() {
-        AnnotationIntrospector sis = getSerializationConfig().getAnnotationIntrospector();
-        AnnotationIntrospector dis = getDeserializationConfig().getAnnotationIntrospector();
+  private void setAnnotationIntrospector() {
+    AnnotationIntrospector sis = getSerializationConfig().getAnnotationIntrospector();
+    AnnotationIntrospector dis = getDeserializationConfig().getAnnotationIntrospector();
 
-        AnnotationIntrospector is1 =
-                AnnotationIntrospectorPair.pair(sis, new MaskingSensitiveDataIntrospector());
-        AnnotationIntrospector is2 =
-                AnnotationIntrospectorPair.pair(dis, new MaskingSensitiveDataIntrospector());
+    AnnotationIntrospector is1 =
+        AnnotationIntrospectorPair.pair(sis, new MaskingSensitiveDataIntrospector());
+    AnnotationIntrospector is2 =
+        AnnotationIntrospectorPair.pair(dis, new MaskingSensitiveDataIntrospector());
 
-        setAnnotationIntrospectors(is1, is2);
-    }
+    setAnnotationIntrospectors(is1, is2);
+  }
 }

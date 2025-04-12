@@ -1,7 +1,7 @@
 package com.preschool.libraries.base.exception;
 
 public interface ErrorCodeOperation {
-    String getCode();
+  String getCode();
 
-    String getMessage();
+  String getMessage();
 }

@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class SensitiveConfigProperties {
-    private List<String> fields;
-    private SensitiveHideType hideType;
-    private int hideCharacters;
-    private List<String> removeFields;
+  private List<String> fields;
+  private SensitiveHideType hideType;
+  private int hideCharacters;
+  private List<String> removeFields;
 }

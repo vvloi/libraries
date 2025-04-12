@@ -10,37 +10,37 @@ import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class CachedBody implements Response.Body {
-    private InputStream inputStream;
-    private int length;
+  private InputStream inputStream;
+  private int length;
 
-    public CachedBody(Response.Body source) throws IOException {
-        this.inputStream = source.asInputStream();
-        this.length = source.length();
-    }
+  public CachedBody(Response.Body source) throws IOException {
+    this.inputStream = source.asInputStream();
+    this.length = source.length();
+  }
 
-    @SneakyThrows
-    @Override
-    public Integer length() {
-        return length;
-    }
+  @SneakyThrows
+  @Override
+  public Integer length() {
+    return length;
+  }
 
-    @Override
-    public boolean isRepeatable() {
-        return false;
-    }
+  @Override
+  public boolean isRepeatable() {
+    return false;
+  }
 
-    @Override
-    public InputStream asInputStream() throws IOException {
-        return new ByteArrayInputStream(inputStream.readAllBytes());
-    }
+  @Override
+  public InputStream asInputStream() throws IOException {
+    return new ByteArrayInputStream(inputStream.readAllBytes());
+  }
 
-    @Override
-    public Reader asReader(Charset charset) throws IOException {
-        return new InputStreamReader(inputStream, UTF_8);
-    }
+  @Override
+  public Reader asReader(Charset charset) throws IOException {
+    return new InputStreamReader(inputStream, UTF_8);
+  }
 
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
-    }
+  @Override
+  public void close() throws IOException {
+    inputStream.close();
+  }
 }

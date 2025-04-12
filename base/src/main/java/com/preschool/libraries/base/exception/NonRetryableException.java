@@ -10,5 +10,5 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NonRetryableException extends RuntimeException {
-    private String code;
+  private String code;
 }

@@ -21,48 +21,48 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 public abstract class ControllerAdvisorAbstract extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(NotAuthorizedException.class)
-    public ResponseEntity<Response<Void>> handleLoginUnsuccessful(
-            NotAuthorizedException notAuthorizedException, WebRequest request) {
-        HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
-        log.error("Not authorized exception");
-        return ResponseEntity.status(unauthorized)
-                .body((Response.error(unauthorized.name(), unauthorized.getReasonPhrase())));
-    }
+  @ExceptionHandler(NotAuthorizedException.class)
+  public ResponseEntity<Response<Void>> handleLoginUnsuccessful(
+      NotAuthorizedException notAuthorizedException, WebRequest request) {
+    HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
+    log.error("Not authorized exception");
+    return ResponseEntity.status(unauthorized)
+        .body((Response.error(unauthorized.name(), unauthorized.getReasonPhrase())));
+  }
 
-    @ExceptionHandler(ApplicationException.class)
-    public ResponseEntity<Response<Void>> handleAppException(
-            ApplicationException applicationException, WebRequest request) {
-        log.error(
-                "Application exception [code {}, message {}]",
-                applicationException.getCode(),
-                applicationException.getMessage());
-        return ResponseEntity.status(applicationException.getHttpStatus())
-                .body((Response.error(applicationException.getCode(), applicationException.getMessage())));
-    }
+  @ExceptionHandler(ApplicationException.class)
+  public ResponseEntity<Response<Void>> handleAppException(
+      ApplicationException applicationException, WebRequest request) {
+    log.error(
+        "Application exception [code {}, message {}]",
+        applicationException.getCode(),
+        applicationException.getMessage());
+    return ResponseEntity.status(applicationException.getHttpStatus())
+        .body((Response.error(applicationException.getCode(), applicationException.getMessage())));
+  }
 
-    @Override
-    public ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
-        List<Map<String, String>> fieldsErrors = fieldsErrors(ex);
-        log.error("ARGUMENT_NOT_VALID: {}", fieldsErrors);
-        return new ResponseEntity<>(
-                Response.error(LibraryErrorCode.ARGUMENT_NOT_VALID, fieldsErrors(ex)),
-                HttpStatus.BAD_REQUEST);
-    }
+  @Override
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      MethodArgumentNotValidException ex,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    List<Map<String, String>> fieldsErrors = fieldsErrors(ex);
+    log.error("ARGUMENT_NOT_VALID: {}", fieldsErrors);
+    return new ResponseEntity<>(
+        Response.error(LibraryErrorCode.ARGUMENT_NOT_VALID, fieldsErrors(ex)),
+        HttpStatus.BAD_REQUEST);
+  }
 
-    private List<Map<String, String>> fieldsErrors(MethodArgumentNotValidException exception) {
-        return exception.getBindingResult().getFieldErrors().stream()
-                .map(
-                        fieldError -> {
-                            Map<String, String> map = new HashMap<>();
-                            map.put("field", fieldError.getField());
-                            map.put("message", fieldError.getDefaultMessage());
-                            return map;
-                        })
-                .collect(Collectors.toList());
-    }
+  private List<Map<String, String>> fieldsErrors(MethodArgumentNotValidException exception) {
+    return exception.getBindingResult().getFieldErrors().stream()
+        .map(
+            fieldError -> {
+              Map<String, String> map = new HashMap<>();
+              map.put("field", fieldError.getField());
+              map.put("message", fieldError.getDefaultMessage());
+              return map;
+            })
+        .collect(Collectors.toList());
+  }
 }
