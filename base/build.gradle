@@ -8,6 +8,6 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 }
 
-publishMavenPublicationToNexusRepoRepository {
+publishMavenJavaPublicationToNexusRepoRepository {
     dependsOn jar
 }

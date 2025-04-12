@@ -1,4 +1,5 @@
-// use plugins with modern style
+import java.text.SimpleDateFormat
+
 plugins {
 	id 'java'
 	id 'jacoco'
@@ -12,9 +13,14 @@ plugins {
 
 allprojects {
 	group = 'com.preschool.libraries'
+
+	// Timestamp versioning
+	def dateFormat = new SimpleDateFormat("yyyyMMdd.HHmm")
+	def timestamp = dateFormat.format(new Date())
 	def branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
-	def gitTag = 'git describe --tags --always'.execute().text.trim()
-	version = "${branch}-${gitTag}-SNAPSHOT"
+	def commit = 'git rev-parse --short HEAD'.execute().text.trim()
+
+	version = "${timestamp}-${branch}-${commit}-SNAPSHOT"
 
 	ext {
 		set('springCloudVersion', "2024.0.0")
@@ -24,19 +30,19 @@ allprojects {
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-releases")
-			snapshotRepositoryUrl = uri("http://nexus.pisolution.vn/repository/maven-snapshots")
+			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-releases/")
+			snapshotRepositoryUrl = uri("http://nexus.pisolution.vn/repository/maven-snapshots/")
 			allowInsecureProtocol = true
-			username = project.findProperty("nexUsername") ?: System.getenv("nexUsername")
-			password = project.findProperty("nexPassword") ?: System.getenv("nexPassword")
+			username = project.findProperty("nexusUsername") ?: System.getenv("NEXUS_USERNAME")
+			password = project.findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
 		}
 	}
 }
 
 subprojects {
+	apply plugin: 'java'
 	apply plugin: 'jacoco'
 	apply plugin: 'idea'
-	apply plugin: 'java'
 	apply plugin: 'org.springframework.boot'
 	apply plugin: 'io.spring.dependency-management'
 	apply plugin: 'com.diffplug.spotless'
@@ -64,32 +70,49 @@ subprojects {
 		}
 	}
 
-	project.allprojects.iterator().forEachRemaining {
-		pj -> {
-			println("Apply spotless configuration for project: " + pj.name)
-			spotless {
-				java {
-					target(fileTree(pj.projectDir) {
-						include '**/*.java'
-						exclude 'build/generated/**/*.*'
-					})
-					importOrder()
-					removeUnusedImports()
-					googleJavaFormat('1.20.0')
-					indentWithTabs(2)
-					indentWithSpaces(4)
-					endWithNewline()
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				from components.java
+				groupId = project.group
+				artifactId = project.name
+				version = rootProject.version
+			}
+		}
+
+		repositories {
+			maven {
+				url = rootProject.hasProperty('release') && rootProject.property('release') == 'true' ?
+						uri("http://nexus.pisolution.vn/repository/maven-releases/") :
+						uri("http://nexus.pisolution.vn/repository/maven-snapshots/")
+				allowInsecureProtocol = true
+				credentials {
+					username = project.findProperty("nexusUsername") ?: System.getenv("NEXUS_USERNAME")
+					password = project.findProperty("nexusPassword") ?: System.getenv("NEXUS_PASSWORD")
 				}
 			}
 		}
 	}
 
+	spotless {
+		java {
+			target fileTree(projectDir) {
+				include '**/*.java'
+				exclude 'build/generated/**/*.*'
+			}
+			importOrder()
+			removeUnusedImports()
+			googleJavaFormat('1.20.0')
+			indentWithSpaces(4)
+			endWithNewline()
+		}
+	}
+
 	dependencies {
 		implementation 'org.slf4j:slf4j-api:2.0.12'
-
 		compileOnly 'org.projectlombok:lombok:1.18.30'
 		annotationProcessor 'org.projectlombok:lombok:1.18.30'
-		annotationProcessor group: 'org.projectlombok', name: 'lombok-mapstruct-binding', version: '0.2.0'
+		annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 		implementation 'org.mapstruct:mapstruct:1.5.2.Final'
 		annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.2.Final'
 		implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
@@ -106,46 +129,7 @@ subprojects {
 		}
 	}
 
-	test.finalizedBy jacocoTestReport
-
-	check.dependsOn jacocoTestCoverageVerification
-
-	spotlessJava {
-		dependsOn compileJava, compileTestJava, test, jacocoTestReport
-	}
-
-	jacocoTestReport {
-		dependsOn test
-	}
-
-	jacocoTestCoverageVerification {
-		violationRules {
-			rule {
-				limit {
-					minimum = 0.0
-				}
-			}
-		}
-	}
-
-	project.allprojects.iterator().forEachRemaining {
-		pj -> {
-			println("publish libraries for: " + pj.name)
-			publishing {
-				publications {
-					maven(MavenPublication) {
-						artifact('build/libs/' + pj.name + '-' + pj.version + '-plain.jar') {
-							extension 'jar'
-						}
-					}
-				}
-			}
-		}
-	}
-
 	test {
 		useJUnitPlatform()
 	}
 }
-
-apply from: "$project.rootDir/sonar.gradle"
