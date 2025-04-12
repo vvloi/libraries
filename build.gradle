@@ -24,7 +24,8 @@ allprojects {
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-public/")
+			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-releases")
+			snapshotRepositoryUrl = uri("http://nexus.pisolution.vn/repository/maven-snapshots")
 			allowInsecureProtocol = true
 			username = project.findProperty("nexUsername") ?: System.getenv("nexUsername")
 			password = project.findProperty("nexPassword") ?: System.getenv("nexPassword")
