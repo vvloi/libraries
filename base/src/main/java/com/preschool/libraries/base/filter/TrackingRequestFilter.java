@@ -44,27 +44,30 @@ public class TrackingRequestFilter extends OncePerRequestFilter {
     ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
 
     SensitiveContext.setContext(
-        SensitiveContext.SensitiveConfig.builder()
-            .sensitiveHideType(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getHideType(),
-                    CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
-            .hideCharacters(sensitiveConfigProperties.getHideCharacters())
-            .fields(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getFields(),
-                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-            .removeFields(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getRemoveFields(),
-                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-            .build());
+            SensitiveContext.SensitiveConfig.builder()
+                    .sensitiveHideType(
+                            Objects.requireNonNullElse(
+                                    sensitiveConfigProperties.getHideType(),
+                                    CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
+                    .hideCharacters(sensitiveConfigProperties.getHideCharacters())
+                    .fields(
+                            Objects.requireNonNullElse(
+                                    sensitiveConfigProperties.getFields(),
+                                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
+                    .removeFields(
+                            Objects.requireNonNullElse(
+                                    sensitiveConfigProperties.getRemoveFields(),
+                                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
+                    .build());
+    try {
+      TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
+      filterChain.doFilter(cachingRequest, cachingResponse);
+      TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
 
-    TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
-    filterChain.doFilter(cachingRequest, cachingResponse);
-    TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
-
-    sendTrackingMessage(requestTrackingData, responseTrackingData);
+      sendTrackingMessage(requestTrackingData, responseTrackingData);
+    } finally {
+      SensitiveContext.clearContext();
+    }
   }
 
   @SneakyThrows

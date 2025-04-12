@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Builder;
 
 public class SensitiveContext {
-  private static final ThreadLocal<SensitiveContext.SensitiveConfig> context = new ThreadLocal<>();
+  private static final ThreadLocal<SensitiveContext.SensitiveConfig> context = new InheritableThreadLocal<>();
 
   public static void setContext(SensitiveConfig sensitiveConfig) {
     context.set(sensitiveConfig);
