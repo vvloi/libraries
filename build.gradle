@@ -13,9 +13,8 @@ plugins {
 allprojects {
 	group = 'com.preschool.libraries'
 	def branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
-	def timestamp = new Date().format("yyyyMMddHHmmss")
 	def gitTag = 'git describe --tags --always'.execute().text.trim()
-	version = "${branch}-${gitTag}-${timestamp}-SNAPSHOT"
+	version = "${branch}-${gitTag}-SNAPSHOT"
 
 	ext {
 		set('springCloudVersion', "2024.0.0")
@@ -25,8 +24,7 @@ allprojects {
 nexusPublishing {
 	repositories {
 		nexusRepo {
-			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-releases")
-			snapshotRepositoryUrl = uri("http://nexus.pisolution.vn/repository/maven-snapshots")
+			nexusUrl = uri("http://nexus.pisolution.vn/repository/maven-public/")
 			allowInsecureProtocol = true
 			username = project.findProperty("nexUsername") ?: System.getenv("nexUsername")
 			password = project.findProperty("nexPassword") ?: System.getenv("nexPassword")
@@ -60,7 +58,7 @@ subprojects {
 		mavenLocal()
 		mavenCentral()
 		maven {
-			url "http://localhost:28082/repository/maven-releases"
+			url "http://nexus.pisolution.vn/repository/maven-public/"
 			allowInsecureProtocol = true
 		}
 	}
