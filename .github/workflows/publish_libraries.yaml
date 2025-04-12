@@ -1,4 +1,4 @@
-name: Publish Library on Push
+name: Publish Libraries to Nexus
 
 on:
   push:
@@ -9,57 +9,66 @@ on:
 jobs:
   publish-libraries:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Checkout sources
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Required for changed-files detection
 
-      - name: Setup Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: '21'
           cache: 'gradle'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+          cache-read-only: false
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Detect changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v46
-
-      - name: Build and publish changed modules
+      - name: Detect changed modules
+        id: changed-modules
         run: |
-          declare -A changed_modules
-
-          # Duyệt qua danh sách file thay đổi
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
-            module=${file%%/*}  # Lấy thư mục gốc của file
-
-            echo "Detected change in: $module"
-
-            # Chỉ thêm vào nếu nó là module hợp lệ (chứa build.gradle hoặc build.gradle.kts)
-            if [[ -d $module && (-f "$module/build.gradle" || -f "$module/build.gradle.kts") ]]; then
-              changed_modules[$module]=$module
+          changed_modules=""
+          for file in $(git diff --name-only HEAD^ HEAD); do
+            module=$(echo "$file" | cut -d'/' -f1)
+            if [[ -d "$module" && (-f "$module/build.gradle" || -f "$module/build.gradle.kts") ]]; then
+              changed_modules="$changed_modules $module"
             fi
           done
-
-          # Kiểm tra nếu không có module nào thay đổi thì thoát
-          if [[ ${#changed_modules[@]} -eq 0 ]]; then
+          # Remove duplicates and trim
+          changed_modules=$(echo "$changed_modules" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          if [[ -z "$changed_modules" ]]; then
             echo "No modules changed, skipping deployment."
-            exit 0
+            echo "changed_modules=" >> $GITHUB_OUTPUT
+          else
+            echo "Changed modules: $changed_modules"
+            echo "changed_modules=$changed_modules" >> $GITHUB_OUTPUT
           fi
 
-          # Build và publish từng module từ thư mục root
-          for module in "${!changed_modules[@]}"; do
-            echo "📦 Deploying module: $module"
-
-            # Chạy Gradle từ thư mục root, chỉ định module với -p
-            ./gradlew -p $module clean build publishToNexusRepo || { echo "❌ Error: Gradle build failed for $module"; exit 1; }
-
-            echo "✅ Published $module to Nexus"
+      - name: Build and publish changed modules
+        if: steps.changed-modules.outputs.changed_modules != ''
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          for module in ${{ steps.changed-modules.outputs.changed_modules }}; do
+            echo "📦 Publishing module: $module"
+            ./gradlew -p "$module" clean build publishToNexusRepo \
+              -PnexusUsername=$NEXUS_USERNAME \
+              -PnexusPassword=$NEXUS_PASSWORD \
+              --stacktrace --info || {
+                echo "❌ Failed to publish module: $module"
+                exit 1
+              }
+            echo "✅ Successfully published $module"
           done
