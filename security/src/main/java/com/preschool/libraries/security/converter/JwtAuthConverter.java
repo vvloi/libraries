@@ -16,6 +16,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
   private static final String GROUPS = "groups";
   private static final String REALM_ACCESS_CLAIM = "realm_access";
   private static final String ROLES_CLAIM = "roles";
+  private static final String RESOURCE_ACCESS_CLAIM = "resource_access";
 
   @Override
   public AbstractAuthenticationToken convert(Jwt jwt) {
@@ -23,7 +24,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
   }
 
   private Set<GrantedAuthority> getAuthorityFromJwt(Jwt jwt) {
-    return Stream.of(extractRealmAccessRoles(jwt), extractGroupRoles(jwt))
+    return Stream.of(extractRealmAccessRoles(jwt), extractRoleClaimOfResourceAccess(jwt))
         .flatMap(Collection::stream)
         .collect(Collectors.toSet());
   }
@@ -42,14 +43,20 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         .map(userRoles -> (Collection<String>) userRoles.get(ROLES_CLAIM));
   }
 
-  private Set<GrantedAuthority> extractGroupRoles(Jwt jwt) {
-    return extractRoleClaimOfGroup(jwt).map(this::parseToAuthority).orElse(Collections.emptySet());
-  }
-
-  private Optional<Collection<String>> extractRoleClaimOfGroup(Jwt jwt) {
-    return Optional.of(jwt.hasClaim(GROUPS))
-        .filter(Boolean::booleanValue)
-        .map(userRolesClaim -> jwt.getClaim(GROUPS));
+  private Set<GrantedAuthority> extractRoleClaimOfResourceAccess(Jwt jwt) {
+    return Optional.ofNullable(jwt.getClaimAsMap(RESOURCE_ACCESS_CLAIM))
+        .map(
+            resourceAccess ->
+                resourceAccess.entrySet().stream()
+                    .map(Map.Entry::getValue)
+                    .filter(Map.class::isInstance)
+                    .map(Map.class::cast)
+                    .map(clientIdClass -> (Collection<String>) clientIdClass.get(ROLES_CLAIM))
+                    .filter(roles -> roles != null && !roles.isEmpty())
+                    .findFirst()
+                    .orElse(Collections.emptySet()))
+        .map(this::parseToAuthority)
+        .orElse(Collections.emptySet());
   }
 
   private Set<GrantedAuthority> parseToAuthority(Collection<String> roles) {
