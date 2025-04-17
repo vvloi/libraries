@@ -17,7 +17,7 @@ public class CorrelationIdContext {
   }
 
   public static void clearContext() {
-      context.remove();
+    context.remove();
   }
 
   @Builder
