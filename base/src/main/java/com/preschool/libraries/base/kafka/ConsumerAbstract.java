@@ -1,21 +1,19 @@
 package com.preschool.libraries.base.kafka;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.common.CommonConstants;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.enumeration.RequestType;
 import com.preschool.libraries.base.exception.ApplicationException;
 import com.preschool.libraries.base.exception.LibraryErrorCode;
 import com.preschool.libraries.base.exception.NonRetryableException;
-import com.preschool.libraries.base.processor.SensitiveProcessor;
 import com.preschool.libraries.base.properties.SensitiveConfigProperties;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import java.util.*;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +24,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @EnableConfigurationProperties(DefaultKafkaProperties.class)
+@Setter(onMethod_ = {@Autowired})
 public abstract class ConsumerAbstract<T> {
   private ObjectMapper objectMapper;
   private ProducerService producerService;
@@ -38,33 +37,13 @@ public abstract class ConsumerAbstract<T> {
         "MUST register metrics-topic when use kafka-utils library");
   }
 
-  @Autowired
-  public void setObjectMapper(AppObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
-  }
-
-  @Autowired
-  public void setProducerService(ProducerService producerService) {
-    this.producerService = producerService;
-  }
-
-  @Autowired
-  public void setDefaultKafkaProperties(DefaultKafkaProperties defaultKafkaProperties) {
-    this.defaultKafkaProperties = defaultKafkaProperties;
-  }
-
-  @Autowired
-  public void setSensitiveConfigProperties(SensitiveConfigProperties sensitiveConfigProperties) {
-    this.sensitiveConfigProperties = sensitiveConfigProperties;
-  }
-
   public void executeHandle(String message, Class<T> tClass, Map<String, String> headers) {
     T data = parseMessage(message, tClass);
 
-    SensitiveContext.setContext(
-        SensitiveContext.SensitiveConfig.builder()
-            .removeFields(sensitiveConfigProperties.getRemoveFields())
-            .build());
+    //    SensitiveContext.setContext(
+    //        SensitiveContext.SensitiveConfig.builder()
+    //            .removeFields(sensitiveConfigProperties.getRemoveFields())
+    //            .build());
     Optional.of(data)
         .map(this::validate)
         .flatMap(
@@ -141,9 +120,9 @@ public abstract class ConsumerAbstract<T> {
       String responseStatus,
       String... validationErrors) {
 
-    message =
-        SensitiveProcessor.removeFields(
-            objectMapper.convertValue(message, new TypeReference<>() {}));
+    //    message =
+    //        SensitiveProcessor.removeFields(
+    //            objectMapper.convertValue(message, new TypeReference<>() {}));
     TrackingRequestDTO.Request request =
         new TrackingRequestDTO.Request(
             CommonConstants.KAFKA_TRACKING_METHOD,

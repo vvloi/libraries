@@ -1,15 +1,10 @@
 package com.preschool.libraries.base.interceptor;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.preschool.libraries.base.processor.SensitiveProcessor;
 import feign.InvocationContext;
 import feign.Request;
 import feign.Response;
 import feign.ResponseInterceptor;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,11 +40,11 @@ public class LoggingInterceptor implements ResponseInterceptor {
   }
 
   private void logPayload(String prefix, byte[] body) {
-    if (body != null && body.length > 0) {
-      String bodyString = new String(body, StandardCharsets.UTF_8);
-      Map<String, Object> payload =
-          new ObjectMapper().convertValue(bodyString, new TypeReference<>() {});
-      log.debug("{} payload: {}", prefix, SensitiveProcessor.removeFields(payload));
-    }
+    //    if (body != null && body.length > 0) {
+    //      String bodyString = new String(body, StandardCharsets.UTF_8);
+    //      Map<String, Object> payload =
+    //          new ObjectMapper().convertValue(bodyString, new TypeReference<>() {});
+    //      log.debug("{} payload: {}", prefix, SensitiveProcessor.removeFields(payload));
+    //    }
   }
 }
