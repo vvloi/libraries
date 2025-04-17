@@ -3,15 +3,13 @@ package com.preschool.libraries.base.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import com.preschool.libraries.base.annotation.SensitiveHideType;
-import com.preschool.libraries.base.context.SensitiveContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SensitiveProcessorTest {
+public class SensitiveDataProcessorTest {
   @BeforeEach
   public void setup() {
     SensitiveContext.SensitiveConfig sensitiveConfig =

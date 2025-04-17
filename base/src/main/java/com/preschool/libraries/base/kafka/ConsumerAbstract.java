@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.common.CommonConstants;
-import com.preschool.libraries.base.context.SensitiveContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.enumeration.RequestType;
 import com.preschool.libraries.base.exception.ApplicationException;

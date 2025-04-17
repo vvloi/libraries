@@ -1,14 +1,15 @@
 package com.preschool.libraries.base.annotation;
 
+import com.preschool.libraries.base.enumeration.MaskType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.PARAMETER})
-public @interface Sensitive {
-  int hideCharacters() default Integer.MAX_VALUE;
-
-  SensitiveHideType hideType() default SensitiveHideType.PARTIAL;
+public @interface SensitiveData {
+  MaskType maskType() default MaskType.FULL;
+  int visiblePrefixLength() default 4;
 }

@@ -2,10 +2,10 @@ package com.preschool.libraries.base.filter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.preschool.libraries.base.annotation.SensitiveDataModule;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import com.preschool.libraries.base.common.CommonConstants;
 import com.preschool.libraries.base.context.CorrelationIdContext;
-import com.preschool.libraries.base.context.SensitiveContext;
 import com.preschool.libraries.base.dto.TrackingRequestDTO;
 import com.preschool.libraries.base.enumeration.RequestType;
 import com.preschool.libraries.base.filter.requestcache.PayloadCachingRequest;
@@ -15,6 +15,8 @@ import com.preschool.libraries.base.processor.SensitiveProcessor;
 import com.preschool.libraries.base.properties.SensitiveConfigProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,109 +27,74 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class TrackingRequestFilter extends OncePerRequestFilter {
-
+  private final ObjectMapper loggingMapper;
   private final ProducerService producerService;
-  private final ObjectMapper objectMapper = new AppObjectMapper();
-  private final SensitiveConfigProperties sensitiveConfigProperties;
+
+  public TrackingRequestFilter(ProducerService producerService) {
+    // Initialize ObjectMapper with custom module for logging
+    this.loggingMapper = new ObjectMapper();
+    this.loggingMapper.registerModule(new SensitiveDataModule());
+    this.producerService = producerService;
+  }
 
   @Override
-  protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
-    PayloadCachingRequest cachingRequest = new PayloadCachingRequest(request);
-    ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+    ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+    ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
-    SensitiveContext.setContext(
-        SensitiveContext.SensitiveConfig.builder()
-            .sensitiveHideType(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getHideType(),
-                    CommonConstants.SENSITIVE_HIDE_TYPE_DEFAULT))
-            .hideCharacters(sensitiveConfigProperties.getHideCharacters())
-            .fields(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getFields(),
-                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-            .removeFields(
-                Objects.requireNonNullElse(
-                    sensitiveConfigProperties.getRemoveFields(),
-                    CommonConstants.REMOVE_HIDE_FIELDS_DEFAULT))
-            .build());
+    chain.doFilter(wrappedRequest, wrappedResponse);
+
+    logRequest(wrappedRequest);
+    logResponse(wrappedResponse);
+
+    wrappedResponse.copyBodyToResponse();
+//    producerService.sendTrackingMessage();
+  }
+
+  private void logRequest(ContentCachingRequestWrapper request) {
     try {
-      TrackingRequestDTO.Request requestTrackingData = exploreRequest(cachingRequest);
-      filterChain.doFilter(cachingRequest, cachingResponse);
-      TrackingRequestDTO.Response responseTrackingData = exploreResponse(cachingResponse);
+      // Fail-fast: Skip if content is empty or not JSON
+      String contentType = request.getContentType();
+      String content = new String(request.getContentAsByteArray(), request.getCharacterEncoding());
+      if (content.isEmpty() || contentType == null || !contentType.contains("application/json")) {
+        log.info("Request: {} {}, Body=Non-JSON or empty",
+                request.getMethod(), request.getRequestURI());
+        return;
+      }
 
-      sendTrackingMessage(requestTrackingData, responseTrackingData);
-    } finally {
-      SensitiveContext.clearContext();
+      // Parse and log with masked data
+      Object requestObject = loggingMapper.readValue(content, Object.class);
+      log.info("Request: {} {}",
+              request.getMethod(), request.getRequestURI());
+      log.info("Body: {}", loggingMapper.writeValueAsString(requestObject));
+    } catch (Exception e) {
+      log.error("Failed to log request", e);
     }
   }
 
-  @SneakyThrows
-  private TrackingRequestDTO.Request exploreRequest(PayloadCachingRequest cachingRequest) {
-    String method = cachingRequest.getMethod();
-    String url = cachingRequest.getRequestURI();
-    List<TrackingRequestDTO.Request.Header> headers = getHeaders(cachingRequest);
-    String payload = new String(cachingRequest.getCachedPayload());
-    log.info("{} {}", method, url);
-    log.debug("Headers: [{}]", objectMapper.writeValueAsString(headers));
+  private void logResponse(ContentCachingResponseWrapper response) {
+    try {
+      // Fail-fast: Skip if content is empty or not JSON
+      String contentType = response.getContentType();
+      String content = new String(response.getContentAsByteArray(), response.getCharacterEncoding());
+      if (content.isEmpty() || contentType == null || !contentType.contains("application/json")) {
+        log.info("Response: Status={}, Body=Non-JSON or empty", response.getStatus());
+        return;
+      }
 
-    Map<String, Object> o = objectMapper.readValue(payload, new TypeReference<>() {});
-    SensitiveProcessor.hideSensitiveFields(o);
-    log.debug("Payload: [{}]", o);
-
-    payload = SensitiveProcessor.removeFields(o);
-    return new TrackingRequestDTO.Request(method, url, headers, payload);
-  }
-
-  private List<TrackingRequestDTO.Request.Header> getHeaders(
-      PayloadCachingRequest cachingRequestWrapper) {
-    return Optional.ofNullable(cachingRequestWrapper.getHeaderNames())
-        .filter(Enumeration::hasMoreElements)
-        .map(Enumeration::nextElement)
-        .map(
-            headerName ->
-                new TrackingRequestDTO.Request.Header(
-                    headerName, cachingRequestWrapper.getHeader(headerName)))
-        .stream()
-        .toList();
-  }
-
-  @SneakyThrows
-  private TrackingRequestDTO.Response exploreResponse(
-      ContentCachingResponseWrapper responseWrapper) {
-    String body = new String(responseWrapper.getContentAsByteArray());
-    Map<String, Object> o = objectMapper.readValue(body, new TypeReference<>() {});
-    SensitiveProcessor.hideSensitiveFields(o);
-    log.debug("Response: [{}]", o);
-
-    body = SensitiveProcessor.removeFields(o);
-    responseWrapper.copyBodyToResponse();
-    return new TrackingRequestDTO.Response(
-        HttpStatus.valueOf(responseWrapper.getStatus()).name(), body);
-  }
-
-  private void sendTrackingMessage(
-      TrackingRequestDTO.Request request, TrackingRequestDTO.Response response) {
-    String requestId = CorrelationIdContext.getRequestId();
-
-    TrackingRequestDTO.MetadataTracking metadataTracking =
-        new TrackingRequestDTO.MetadataTracking(RequestType.REST_API, request, response);
-    TrackingRequestDTO trackingRequestDTO = new TrackingRequestDTO(requestId, metadataTracking);
-
-    KafkaMessageMetadata<TrackingRequestDTO, Void> kafkaMessageMetadata =
-        KafkaMessageMetadata.<TrackingRequestDTO, Void>builder()
-            .data(trackingRequestDTO)
-            .xRequestId(requestId)
-            .build();
-
-    producerService.sendTrackingMessage(kafkaMessageMetadata);
+      // Parse and log with masked data
+      Object responseObject = loggingMapper.readValue(content, Object.class);
+      log.info("Response: Status={}",
+              response.getStatus());
+      log.info("Response body: {}", loggingMapper.writeValueAsString(responseObject));
+    } catch (Exception e) {
+      log.error("Failed to log response", e);
+    }
   }
 }

@@ -1,6 +1,5 @@
 package com.preschool.libraries.base.properties;
 
-import com.preschool.libraries.base.annotation.SensitiveHideType;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;

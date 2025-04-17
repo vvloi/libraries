@@ -1,6 +1,5 @@
 package com.preschool.libraries.base.common;
 
-import com.preschool.libraries.base.annotation.SensitiveHideType;
 import java.util.List;
 
 public class CommonConstants {

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.preschool.libraries.base.annotation.MaskingSensitiveDataIntrospector;
 
 public class AppObjectMapper extends ObjectMapper {
   public AppObjectMapper() {

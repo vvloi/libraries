@@ -16,6 +16,10 @@ public class CorrelationIdContext {
     return context.get() == null ? UUID.randomUUID().toString() : context.get().xRequestId;
   }
 
+  public static void clearContext() {
+      context.remove();
+  }
+
   @Builder
   public record CorrelationIdData(String xRequestId) {}
 }

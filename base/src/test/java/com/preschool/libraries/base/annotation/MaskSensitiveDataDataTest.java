@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.preschool.libraries.base.common.AppObjectMapper;
 import org.junit.jupiter.api.Test;
 
-public class MaskSensitiveDataTest {
+public class MaskSensitiveDataDataTest {
   @Test
   public void notWorkWithRecord_shouldBeFixed() throws Exception {
     ObjectMapper mapper = new AppObjectMapper();
@@ -30,11 +30,12 @@ public class MaskSensitiveDataTest {
     assertEquals(expectedJson, json);
   }
 
-  public record SensitiveDataRecordTest(String username, @Sensitive String password) {}
+  public record SensitiveDataRecordTest(String username, @SensitiveData String password) {}
 
   public static class SensitiveDataClassTest {
     private String username;
-    @Sensitive private String password;
+    @SensitiveData
+    private String password;
 
     public SensitiveDataClassTest(String username, String password) {
       this.username = username;

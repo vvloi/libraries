@@ -37,8 +37,12 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
       buildMissingRequestIdHeaderResponse(response);
       return;
     }
-    CorrelationIdContext.setContext(xRequestId);
-    filterChain.doFilter(request, response);
+    try {
+      CorrelationIdContext.setContext(xRequestId);
+      filterChain.doFilter(request, response);
+    } finally {
+      CorrelationIdContext.clearContext();
+    }
   }
 
   @SneakyThrows
