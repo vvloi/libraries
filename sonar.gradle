@@ -1,0 +1,5 @@
+sonar {
+    properties {
+//        property "sonar.host.url", "http://localhost:1111"
+    }
+}
