@@ -3,10 +3,10 @@ package com.preschool.libraries.security.config;
 import com.preschool.libraries.security.converter.JwtAuthConverter;
 import com.preschool.libraries.security.handler.App401AuthenticationEndpointHandler;
 import com.preschool.libraries.security.handler.App403AccessDeniedHandler;
+import java.util.Arrays;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
@@ -16,6 +16,9 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Component
 @Setter(onMethod = @__(@Autowired))
@@ -41,9 +44,13 @@ public abstract class SecurityConfigurationAbstract {
   }
 
   @Bean
-  public SecurityFilterChain resourceServerFilterChain(HttpSecurity http) throws Exception {
-    return http.cors(Customizer.withDefaults())
-        // disable csrf to get permitAll effectively of request matchers public url
+  public SecurityFilterChain resourceServerFilterChain(
+      HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    return http.cors(
+            cors ->
+                cors.configurationSource(
+                    corsConfigurationSource)) // disable csrf to get permitAll effectively of
+        // request matchers public url
         .csrf(csrf -> csrf.ignoringRequestMatchers(publicUrls()))
         .authorizeHttpRequests(
             auth -> auth.requestMatchers(publicUrls()).permitAll().anyRequest().authenticated())
@@ -63,4 +70,18 @@ public abstract class SecurityConfigurationAbstract {
   }
 
   public abstract String[] publicUrls();
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(Arrays.asList("*"));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(Arrays.asList("*"));
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }
